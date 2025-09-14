@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+httpx
+python-dotenv
+pydantic
+jinja2
+selenium
+webdriver-manager
+beautifulsoup4
+aiofiles

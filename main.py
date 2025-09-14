@@ -1649,3 +1649,13 @@ def generate_rule_based_fallback(
         "verdict": verdict,
         "explanation": final_explanation
     }
+
+# Add a health check route for Vercel
+@app.get("/api/health")
+async def health_check():
+    return {
+        "status": "ok",
+        "version": "1.0.0",
+        "name": "Cybertra - Defending Your Digital Path",
+        "timestamp": datetime.now().isoformat()
+    }

@@ -1,13 +1,15 @@
-# URL Sandbox API
+# Cybertra - Defending Your Digital Path
 
 ## Overview
-The URL Sandbox API is a comprehensive security tool that analyzes URLs for potential threats using multiple security checks and AI-powered analysis.
+Cybertra is a comprehensive security tool that analyzes URLs for potential threats using multiple security checks and AI-powered analysis.
 
 ## Key Features
 - Multi-layered URL analysis using Google Web Risk API, VirusTotal, and heuristic pattern detection
 - AI-powered verdict synthesis using either OpenAI or Google Gemini models
 - Fallback mechanisms to ensure reliable operation even when AI services are unavailable
 - Clear, human-readable explanations of security verdicts
+- Webpage content summarization for safer browsing
+- QR code scanner for analyzing links embedded in QR codes
 
 ## AI Synthesis Architecture
 The system employs a multi-tier AI strategy:
@@ -42,6 +44,25 @@ pip install -r requirements.txt
 # Start the server
 uvicorn main:app --reload
 ```
+
+## Deployment
+
+### Vercel Deployment
+This project is configured for deployment on Vercel:
+
+1. Connect your GitHub repository to Vercel
+2. Set the necessary environment variables in the Vercel dashboard
+3. Deploy with the following settings:
+   - Framework Preset: Other
+   - Build Command: None (automatically handled)
+   - Output Directory: /vercel/output
+   - Install Command: pip install -r requirements.txt
+
+### Other Platforms
+The application can also be deployed on:
+- Heroku (use a Procfile)
+- AWS Lambda (with additional configuration)
+- Google Cloud Run (containerized)
 
 ## Handling Rate Limits
 The system has been enhanced to handle rate limit errors from both the OpenAI and Gemini APIs. If a rate limit is encountered:
