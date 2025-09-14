@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Check if a URL or QR code is malicious using advanced security analysis. Detect phishing, malware, and suspicious content.">
+    <meta name="keywords" content="URL checker, QR code scanner, security analysis, phishing detection, malware scanner">
+    <title>Sprintathon 2025 - URL & QR Code Security Analysis</title>
+    <!-- Include QR code scanning libraries -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --primary-dark: #3367d6;
+            --accent-color: #fbbc04;
+            --danger-color: #ea4335;
+            --success-color: #34a853;
+            --warning-color: #f6ad55;
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --surface-light: #ffffff;
+            --surface-variant: #f8f9fe;
+            --border-color: #dadce0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-full: 9999px;
+            --transition-default: all 0.2s ease-in-out;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            background-color: var(--surface-variant);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            line-height: 1.2;
+            color: var(--text-primary);
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+        .form-container {
+            background-color: var(--surface-light);
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            margin: 1.5rem 0;
+            transition: var(--transition-default);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        input[type="text"], input[type="url"] {
+            width: 80%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #888888;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #555555;
+        }
+        .result-container {
+            display: none;
+            background-color: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            margin-top: 25px;
+            transition: all 0.3s ease;
+        }
+        .safe {
+            background-color: #e6f4ea;
+            border-left: 5px solid #34a853;
+        }
+        .dangerous {
+            background-color: #fce8e6;
+            border-left: 5px solid #ea4335;
+        }
+        .nonexistent {
+            background-color: #fef7e0;
+            border-left: 5px solid #fbbc04;
+        }
+        .suspicious {
+            background-color: #fef7e0;
+            border-left: 5px solid #f6ad55;
+        }
+        .pending {
+            background-color: #e8eaed;
+            border-left: 5px solid #5f6368;
+        }
+        .details {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .form-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .error-message {
+            color: #d93025;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #fce8e6;
+            border-radius: 4px;
+            display: none;
+        }
+        .url-unwrapping {
+            background-color: #eeeeee;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 5px solid #888888;
+        }
+        .url-unwrapping ol {
+            margin-top: 5px;
+            padding-left: 20px;
+        }
+        .shared-domain-info {
+            background-color: #eeeeee;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 5px solid #888888;
+        }
+        .risk-very_low {
+            color: #34a853;
+            font-weight: bold;
+        }
+        .risk-low {
+            color: #34a853;
+            font-weight: bold;
+        }
+        .risk-medium-low {
+            color: #888888;
+            font-weight: bold;
+        }
+        .risk-medium {
+            color: #fbbc04;
+            font-weight: bold;
+        }
+        .risk-high {
+            color: #ea4335;
+            font-weight: bold;
+        }
+        .risk-very_high {
+            color: #ea4335;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+        .risk-unknown {
+            color: #5f6368;
+            font-weight: bold;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #888888;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* QR Code Scanner Styles */
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #eeeeee;
+            border-radius: 4px 4px 0 0;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background-color: white;
+            border-top: 2px solid #888888;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        #qr-reader {
+            width: 100%;
+            margin: 0 auto;
+            border: 2px solid #888888;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #qr-file-input {
+            display: none;
+        }
+        .file-upload-label {
+            display: inline-block;
+            background-color: #888888;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .file-upload-label:hover {
+            background-color: #555555;
+        }
+        .qr-instructions {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #eeeeee;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .scan-option {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .ai-analysis {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #eeeeee;
+            border-left: 5px solid #888888;
+        }
+        .ai-verdict {
+            font-weight: bold;
+        }
+        
+        /* Drag and drop styles */
+        .drag-drop-area {
+            border: 2px dashed #888888;
+            border-radius: 8px;
+            padding: 25px;
+            text-align: center;
+            margin: 15px 0;
+            transition: all 0.3s;
+            background-color: #eeeeee;
+            cursor: pointer;
+        }
+        .drag-drop-area.highlight {
+            background-color: #dddddd;
+            border-color: #888888;
+        }
+        .drag-drop-area p {
+            margin: 5px 0;
+        }
+        .drag-drop-area .drag-icon {
+            font-size: 32px;
+            color: #888888;
+            margin-bottom: 10px;
+        }
+        .paste-area {
+            margin-top: 15px;
+            text-align: center;
+        }
+        .paste-button {
+            background-color: #888888;
+            margin-top: 10px;
+        }
+        .paste-button:hover {
+            background-color: #555555;
+        }
+        .or-divider {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            color: #888888;
+        }
+        .or-divider:before, .or-divider:after {
+            content: "";
+            flex-grow: 1;
+            height: 1px;
+            background-color: #888888;
+            margin: 0 10px;
+        }
+        
+        /* Input Field Styles */
+        .unified-input-container:focus-within {
+            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.15);
+        }
+        
+        #urlInput::placeholder {
+            color: #888;
+            transition: color 0.2s ease;
+        }
+        
+        #urlInput:focus::placeholder {
+            color: #bbb;
+        }
+        
+        #analyze-button:hover {
+            background-color: #3367d6;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transform: translateY(-1px);
+        }
+        
+        #analyze-button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        /* Summary Section Styles */
+        .summary-container {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .summary-container h3 {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-weight: 600;
+        }
+        
+        .summary-details {
+            line-height: 1.5;
+        }
+        
+        .summary-details ul, .summary-details ol {
+            margin-top: 8px;
+            margin-bottom: 15px;
+            padding-left: 25px;
+        }
+        
+        .summary-details li {
+            margin-bottom: 6px;
+        }
+        
+        #toggle-summary {
+            transition: all 0.2s;
+        }
+        
+        #toggle-summary:hover {
+            background-color: #3367d6;
+        }
+        
+        /* Input styles */
+        .unified-input-container {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background-color: var(--surface-light);
+            transition: var(--transition-default);
+            overflow: hidden;
+        }
+        
+        .unified-input-container:focus-within {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+        }
+        
+        #urlInput {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: var(--text-primary);
+            padding: 1rem;
+            border: none;
+            outline: none;
+            width: 100%;
+            min-height: 60px;
+            resize: none;
+            background: transparent;
+        }
+        
+        #urlInput::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+        
+        /* Button styles */
+        .button {
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: var(--transition-default);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .button-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .button-primary:hover {
+            background-color: var(--primary-dark);
+            box-shadow: var(--shadow-sm);
+            transform: translateY(-1px);
+        }
+        
+        .button-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            padding: 0;
+        }
+        
+        /* Dropdown styles */
+        .dropdown {
+            position: relative;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: var(--surface-light);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            min-width: 220px;
+            z-index: 100;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transform-origin: top right;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        
+        .dropdown-menu.hidden {
+            transform: scale(0.95);
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .dropdown-item {
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.1s;
+            color: var(--text-primary);
+            font-weight: 400;
+        }
+        
+        .dropdown-item:hover {
+            background-color: var(--surface-variant);
+        }
+        
+        .dropdown-divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 0.25rem 0;
+        }
+        
+        /* Icon button */
+        .icon-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: var(--primary-color);
+            font-size: 24px;
+            transition: var(--transition-default);
+        }
+        
+        .icon-button:hover {
+            background-color: rgba(66, 133, 244, 0.1);
+        }
+        
+        /* Material icons */
+        .material-icons-round {
+            font-size: 20px;
+            line-height: 1;
+        }
+        
+        /* Smooth transitions */
+        #image-preview-container {
+            transition: var(--transition-default);
+        }
+        
+        @media (max-width: 600px) {
+            .summary-container {
+                padding: 10px;
+            }
+            .summary-details ul, .summary-details ol {
+                padding-left: 20px;
+            }
+            
+            .unified-input-container {
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            #urlInput {
+                font-size: 15px;
+            }
+            
+            #analyze-button {
+                padding: 8px 16px;
+                font-size: 15px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            body {
+                padding: 15px;
+            }
+            
+            #dropdown-menu {
+                right: -10px;
+                min-width: 180px;
+            }
+        }
+        
+        @media (min-width: 601px) and (max-width: 800px) {
+            .unified-input-container {
+                padding: 10px 12px;
+            }
+            
+            #analyze-button {
+                padding: 8px 16px;
+            }
+            
+            body {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 style="color: #4285f4; font-size: 32px; text-align: center; margin-bottom: 10px;">Sprintathon 2025</h1>
+    <p style="text-align: center; color: #5f6368; margin-bottom: 25px;">Check if a URL or QR code is malicious using our advanced security analysis</p>
+    
+    <!-- Website Summary Section -->
+    <div class="summary-container" style="background-color: #f8f9fe; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #4285f4; max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out;">
+        <h3 style="color: #4285f4; margin-top: 0;">About This Tool</h3>
+        <p><strong>Purpose:</strong> This security tool analyzes URLs and QR codes to detect potential threats such as phishing, malware, and suspicious content.</p>
+        
+        <div class="summary-details">
+            <p><strong>Features:</strong></p>
+            <ul>
+                <li><strong>URL Analysis:</strong> Enter any web address to check its safety</li>
+                <li><strong>QR Code Scanning:</strong> Use your device camera to scan QR codes in real-time</li>
+                <li><strong>QR Image Processing:</strong> Upload or paste images containing QR codes</li>
+                <li><strong>Threat Detection:</strong> Identify phishing attempts, malware, suspicious domains, and more</li>
+                <li><strong>URL Unwrapping:</strong> Follow redirect chains to reveal the true destination of shortened URLs</li>
+                <li><strong>AI-Enhanced Analysis:</strong> Get detailed explanations of potential risks</li>
+            </ul>
+            
+            <p><strong>How to use:</strong></p>
+            <ol>
+                <li>Type a URL directly into the input field, or</li>
+                <li>Paste an image containing a QR code, or</li>
+                <li>Click the features button to access more options</li>
+                <li>Drag and drop a QR code image to the drop zone</li>
+                <li>Review the comprehensive security analysis results</li>
+            </ol>
+            
+            <p><strong>Analysis Results Include:</strong> Safety verdict, domain information, redirect chains, threat details, and recommended actions if threats are detected.</p>
+        </div>
+        
+        <button id="toggle-summary" style="background-color: #4285f4; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; display: block; margin: 10px 0 0 auto;">Show Less</button>
+    </div>
+    
+    <div class="form-container" style="background-color: white; padding: 25px 20px; border-radius: 12px; box-shadow: 0 1px 6px rgba(0,0,0,0.1); max-width: 650px; margin: 0 auto;">
+        <form id="mainForm">
+            <div class="unified-input-container" style="display: flex; align-items: center; position: relative; border: 1px solid #e0e0e0; border-radius: 8px; padding: 0; background-color: white; transition: all 0.3s ease; margin: 0 auto;">
+                <!-- Main input area with placeholder for image preview -->
+                <div id="input-area" style="position: relative; flex: 1; display: flex;">
+                    <textarea id="urlInput" name="url" placeholder="Paste or type here..." style="width: 100%; min-height: 70px; resize: none; border: none; outline: none; font-size: 16px; padding: 15px; font-family: inherit; background: transparent; z-index: 1;"></textarea>
+                    
+                    <!-- Image preview container (initially hidden) -->
+                    <div id="image-preview-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; align-items: center; padding: 10px; z-index: 0;">
+                        <div style="position: relative; max-width: 70px; margin-right: 15px;">
+                            <img id="image-preview" src="" alt="QR Preview" style="max-width: 100%; border-radius: 4px;">
+                            <button id="remove-image" style="position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; border-radius: 50%; background: #ea4335; color: white; border: none; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Plus Button -->
+                <div class="dropdown" style="position: relative; margin-right: 10px;">
+                    <button id="dropdown-button" type="button" style="background: none; border: none; cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 20px; color: #4285f4;">⊕</button>
+                    
+                    <!-- Dropdown Menu (initially hidden) -->
+                    <div id="dropdown-menu" style="position: absolute; right: 0; top: 100%; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px; z-index: 100; display: none; margin-top: 10px;">
+                        <div class="dropdown-item" id="live-scan-option" style="padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 18px;">�</span>
+                            <span>Live QR scanner</span>
+                        </div>
+                        <label class="dropdown-item" for="qr-file-input" style="padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; border-top: 1px solid #f0f0f0;">
+                            <span style="font-size: 18px;">📷</span>
+                            <span>Photo QR scanner</span>
+                        </label>
+                        <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
+                        <div class="dropdown-item" id="chrome-extension-option" style="padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; border-top: 1px solid #f0f0f0;">
+                            <span style="font-size: 18px;">🧩</span>
+                            <span>Chrome Extension</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button type="submit" id="analyze-button" style="background-color: #4285f4; color: white; border: none; padding: 10px 30px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 500; transition: all 0.2s;">
+                    Analyze
+                </button>
+            </div>
+            
+            <p class="form-hint" id="inputHint" style="margin-top: 10px; text-align: center; color: #5f6368; font-size: 14px;">Enter URL or paste QR image</p>
+        </form>
+        
+        <!-- QR Live Scanner - Hidden until activated -->
+        <div id="qrLiveContainer" style="display:none; margin-top:20px;">
+            <div class="qr-instructions" style="background-color: #f7faff; border-radius: 12px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #4285f4;">
+                <p style="font-weight: 600; color: #4285f4; margin-top: 0;">Live QR Code Scanner</p>
+                <p style="margin-bottom: 0;">Position the QR code in front of your camera. Once detected, the URL will be automatically analyzed.</p>
+            </div>
+            <div class="scan-option" style="text-align: center; margin-bottom: 15px;">
+                <button id="stopScanButton" style="background-color: #ea4335; color: white; border: none; padding: 10px 25px; border-radius: 20px; cursor: pointer; font-size: 16px; font-weight: 500; box-shadow: 0 2px 5px rgba(234, 67, 53, 0.25); transition: all 0.2s ease;">Stop Scanning</button>
+            </div>
+            <div id="qr-reader" style="border-radius: 12px; overflow: hidden; border: none; box-shadow: 0 3px 10px rgba(0,0,0,0.1);"></div>
+        </div>
+        
+        <!-- Drag & Drop area - Styled to match screenshot -->
+        <div id="drag-drop-area" class="drag-drop-area" style="margin: 20px auto; max-width: 550px; border: 1px dashed #d0d0d0; background-color: #fafafa; border-radius: 8px; padding: 25px; transition: all 0.3s ease; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div class="drag-icon" style="font-size: 24px; color: #facc15; margin-bottom: 10px;">📁</div>
+            <p style="color: #4285f4; margin: 0; font-size: 16px;">Drop QR code image here</p>
+        </div>
+        
+        <!-- Selected file name display -->
+        <p id="file-name" style="margin-top: 10px; font-size: 14px; text-align: center;"></p>
+    </div>
+    
+    <div class="loader" id="loader"></div>
+    <div class="error-message" id="errorMessage" style="display: none; padding: 15px; margin: 20px 0; border-radius: 12px; background-color: #fdeded; color: #ea4335; border-left: 4px solid #ea4335; font-size: 15px; box-shadow: 0 2px 8px rgba(234, 67, 53, 0.1); animation: fadeIn 0.3s ease;"></div>
+    
+    <!-- Status message to provide real-time feedback -->
+    <div class="status-message" id="statusMessage" style="display: none; padding: 15px; margin: 20px 0; border-radius: 12px; background-color: #e8f0fe; color: #1a73e8; border-left: 4px solid #4285f4; font-size: 15px; box-shadow: 0 2px 8px rgba(66, 133, 244, 0.1); animation: fadeIn 0.3s ease;"></div>
+    
+    <style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    </style>
+    
+    <div class="result-container" id="resultContainer">
+        <h2>Analysis Results</h2>
+        <div class="details" id="resultDetails">
+            <!-- Results will be displayed here -->
+        </div>
+    </div>
+    
+    <script>
+        // Unified input field functionality
+        const urlInput = document.getElementById('urlInput');
+        const inputHint = document.getElementById('inputHint');
+        const qrLiveContainer = document.getElementById('qrLiveContainer');
+        const liveScanButton = document.getElementById('live-scan-button');
+        const stopScanButton = document.getElementById('stopScanButton');
+        
+        // Handle scanning with camera
+        liveScanButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            startQrScanner();
+        });
+        
+        // Stop scanning
+        stopScanButton.addEventListener('click', function() {
+            stopQrScanner();
+        });
+        
+        function startQrScanner() {
+            qrLiveContainer.style.display = 'block';
+            initializeAndStartScanner();
+        }
+        
+        function stopQrScanner() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop();
+            }
+            qrLiveContainer.style.display = 'none';
+        }
+        
+        function initializeAndStartScanner() {
+            try {
+                // Update status
+                const statusMessage = document.getElementById('statusMessage');
+                if (statusMessage) {
+                    statusMessage.textContent = 'Initializing camera for QR scanning...';
+                    statusMessage.style.display = 'block';
+                }
+                
+                // Initialize QR scanner if not already initialized
+                if (!html5QrCode) {
+                    html5QrCode = new Html5Qrcode("qr-reader");
+                }
+                
+                const config = { 
+                    fps: 15,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0,
+                    formatsToSupport: [
+                        Html5QrcodeSupportedFormats.QR_CODE,
+                        Html5QrcodeSupportedFormats.AZTEC,
+                        Html5QrcodeSupportedFormats.DATA_MATRIX
+                    ],
+                    experimentalFeatures: {
+                        useBarCodeDetectorIfSupported: true
+                    }
+                };
+                
+                html5QrCode.start(
+                    { facingMode: "environment" },
+                    config,
+                    qrCodeSuccessCallback,
+                    qrCodeErrorCallback
+                );
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = `Error starting camera: ${error.message}`;
+                document.getElementById('errorMessage').style.display = 'block';
+                qrLiveContainer.style.display = 'none';
+            }
+        }
+        
+        // Common function to analyze a URL from any source (text input, QR live scan, or QR file upload)
+        async function analyzeQrCodeText(decodedText) {
+            const loader = document.getElementById('loader');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultDetails = document.getElementById('resultDetails');
+            const errorMessage = document.getElementById('errorMessage');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            // Reset display and show loader
+            resultContainer.style.display = 'none';
+            errorMessage.style.display = 'none';
+            statusMessage.textContent = 'Analyzing URL: ' + decodedText;
+            statusMessage.style.display = 'block';
+            loader.style.display = 'block';
+            
+            try {
+                // Make sure URL starts with http:// or https://
+                let formattedUrl = decodedText;
+                if (!decodedText.startsWith('http://') && !decodedText.startsWith('https://')) {
+                    formattedUrl = 'https://' + decodedText;
+                }
+                
+                const response = await fetch('/analyze-url', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: formattedUrl }),
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `Server error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Ensure required fields exist to prevent "cannot read property of undefined" errors
+                if (!data.analysis) {
+                    data.analysis = {};
+                }
+                
+                if (!data.analysis.verdict) {
+                    data.analysis.verdict = "Unknown";
+                }
+                
+                // Create HTML for result
+                let resultHTML = '';
+                
+                if (data.analysis.safe) {
+                    if (data.analysis.verdict === "Pending Analysis") {
+                        resultContainer.className = 'result-container pending';
+                        resultHTML = `
+                            <h3>⏳ Analysis in Progress</h3>
+                            <p><strong>URL:</strong> ${data.url}</p>
+                            <p><strong>Status:</strong> ${data.analysis.verdict}</p>
+                            <p><strong>Service:</strong> ${data.service}</p>
+                            <p><strong>Note:</strong> ${data.analysis.note}</p>
+                            <p><strong>Message:</strong> ${data.message || 'Please check back in a few minutes for complete results.'}</p>
+                            <p><strong>Analysis Time:</strong> ${data.timestamp}</p>
+                        `;
+                    } else {
+                        resultContainer.className = 'result-container safe';
+                        resultHTML = `
+                            <h3>✅ Safe URL</h3>
+                            ${data.url_unwrapping && data.url_unwrapping.is_shortened ? 
+                              `<div class="url-unwrapping">
+                                 <p><strong>Original URL:</strong> ${data.url_unwrapping.original_url}</p>
+                                 <p><strong>Final Destination:</strong> ${data.url_unwrapping.final_url}</p>
+                                 <p><strong>URL Shortener Detected:</strong> Yes</p>
+                                 ${data.url_unwrapping.redirect_chain && data.url_unwrapping.redirect_chain.length > 1 ? 
+                                  `<p><strong>Redirect Chain:</strong></p>
+                                   <ol>${data.url_unwrapping.redirect_chain.map(url => `<li>${url}</li>`).join('')}</ol>` : ''}
+                               </div>` : 
+                              `<p><strong>URL:</strong> ${data.url}</p>`
+                            }
+                            <p><strong>Verdict:</strong> ${data.analysis.verdict}</p>
+                            <p><strong>Service:</strong> ${data.service}</p>
+                            ${data.analysis.domain_age_days ? `<p><strong>Domain Age:</strong> ${data.analysis.domain_age_days} days</p>` : ''}
+                            ${data.analysis.note ? `<p><strong>Note:</strong> ${data.analysis.note}</p>` : ''}
+                            ${data.analysis.is_shared_domain ? 
+                              `<div class="shared-domain-info">
+                                <p><strong>Shared Domain Platform:</strong> Yes</p>
+                                ${data.analysis.shared_domain_details ? 
+                                  `<p><strong>Platform:</strong> ${data.analysis.shared_domain_details.platform || 'Unknown'}</p>
+                                   <p><strong>Category:</strong> ${data.analysis.shared_domain_details.category || 'Unknown'}</p>
+                                   <p><strong>Risk Level:</strong> <span class="risk-${data.analysis.shared_domain_details.risk_level || 'unknown'}">${data.analysis.shared_domain_details.risk_level || 'Unknown'}</span></p>
+                                   ${data.analysis.shared_domain_details.description ? 
+                                    `<p><strong>Description:</strong> ${data.analysis.shared_domain_details.description}</p>` : ''}` : ''}
+                               </div>` : ''}
+                            ${data.message ? `<p><strong>Message:</strong> ${data.message}</p>` : ''}
+                            ${data.analysis.heuristic_flags && data.analysis.heuristic_flags.length > 0 ? 
+                              `<p><strong>Heuristic Analysis Flags:</strong></p><ul>${data.analysis.heuristic_flags.map(flag => `<li>${flag}</li>`).join('')}</ul>` : ''}
+                            <p><strong>Analysis Time:</strong> ${data.timestamp}</p>
+                        `;
+                    }
+                } else if (data.analysis.verdict === "Non-existent" || data.analysis.verdict === "Invalid 🚫") {
+                    resultContainer.className = 'result-container nonexistent';
+                    resultHTML = `
+                        <h3>⚠️ Invalid or Non-existent Domain</h3>
+                        ${data.url_unwrapping && data.url_unwrapping.is_shortened ? 
+                          `<div class="url-unwrapping">
+                             <p><strong>Original URL:</strong> ${data.url_unwrapping.original_url}</p>
+                             <p><strong>Final Destination:</strong> ${data.url_unwrapping.final_url}</p>
+                             <p><strong>URL Shortener Detected:</strong> Yes</p>
+                             ${data.url_unwrapping.redirect_chain && data.url_unwrapping.redirect_chain.length > 1 ? 
+                              `<p><strong>Redirect Chain:</strong></p>
+                               <ol>${data.url_unwrapping.redirect_chain.map(url => `<li>${url}</li>`).join('')}</ol>` : ''}
+                           </div>` : 
+                          `<p><strong>URL:</strong> ${data.url}</p>`
+                        }
+                        <p><strong>Verdict:</strong> ${data.analysis.verdict}</p>
+                        <p><strong>Message:</strong> ${data.message}</p>
+                        <p><strong>Recommended Action:</strong> ${data.recommended_action}</p>
+                        <p><strong>Analysis Time:</strong> ${data.timestamp}</p>
+                    `;
+                } else if (data.analysis.verdict === "Suspicious" || data.analysis.verdict === "Caution ⚠️") {
+                    resultContainer.className = 'result-container suspicious';
+                    resultHTML = `
+                        <h3>⚠️ Suspicious URL</h3>
+                        ${data.url_unwrapping && data.url_unwrapping.is_shortened ? 
+                          `<div class="url-unwrapping">
+                             <p><strong>Original URL:</strong> ${data.url_unwrapping.original_url}</p>
+                             <p><strong>Final Destination:</strong> ${data.url_unwrapping.final_url}</p>
+                             <p><strong>URL Shortener Detected:</strong> Yes</p>
+                             ${data.url_unwrapping.redirect_chain && data.url_unwrapping.redirect_chain.length > 1 ? 
+                              `<p><strong>Redirect Chain:</strong></p>
+                               <ol>${data.url_unwrapping.redirect_chain.map(url => `<li>${url}</li>`).join('')}</ol>` : ''}
+                           </div>` : 
+                          `<p><strong>URL:</strong> ${data.url}</p>`
+                        }
+                        <p><strong>Verdict:</strong> ${data.analysis.verdict}</p>
+                        <p><strong>Service:</strong> ${data.service}</p>
+                        ${data.analysis.vt_detections ? `<p><strong>VirusTotal Detections:</strong> ${data.analysis.vt_detections}</p>` : ''}
+                        ${data.analysis.domain_age_days ? `<p><strong>Domain Age:</strong> ${data.analysis.domain_age_days} days</p>` : ''}
+                        ${data.analysis.is_shared_domain ? 
+                          `<div class="shared-domain-info">
+                            <p><strong>Shared Domain Platform:</strong> Yes</p>
+                            ${data.analysis.shared_domain_details ? 
+                              `<p><strong>Platform:</strong> ${data.analysis.shared_domain_details.platform || 'Unknown'}</p>
+                               <p><strong>Category:</strong> ${data.analysis.shared_domain_details.category || 'Unknown'}</p>
+                               <p><strong>Risk Level:</strong> <span class="risk-${data.analysis.shared_domain_details.risk_level || 'unknown'}">${data.analysis.shared_domain_details.risk_level || 'Unknown'}</span></p>
+                               ${data.analysis.shared_domain_details.description ? 
+                                `<p><strong>Description:</strong> ${data.analysis.shared_domain_details.description}</p>` : ''}` : ''}
+                           </div>` : ''}
+                        ${data.analysis.heuristic_flags && data.analysis.heuristic_flags.length > 0 ? 
+                          `<p><strong>Heuristic Analysis Flags:</strong></p><ul>${data.analysis.heuristic_flags.map(flag => `<li>${flag}</li>`).join('')}</ul>` : ''}
+                        <p><strong>Message:</strong> ${data.message}</p>
+                        <p><strong>Recommended Action:</strong> ${data.recommended_action}</p>
+                        <p><strong>Analysis Time:</strong> ${data.timestamp}</p>
+                    `;
+                } else if (data.analysis.verdict === "Dangerous" || data.analysis.verdict === "Dangerous 🚨") {
+                    resultContainer.className = 'result-container dangerous';
+                    resultHTML = `
+                        <h3>🚨 Dangerous URL</h3>
+                        ${data.url_unwrapping && data.url_unwrapping.is_shortened ? 
+                          `<div class="url-unwrapping">
+                             <p><strong>Original URL:</strong> ${data.url_unwrapping.original_url}</p>
+                             <p><strong>Final Destination:</strong> ${data.url_unwrapping.final_url}</p>
+                             <p><strong>URL Shortener Detected:</strong> Yes</p>
+                             ${data.url_unwrapping.redirect_chain && data.url_unwrapping.redirect_chain.length > 1 ? 
+                              `<p><strong>Redirect Chain:</strong></p>
+                               <ol>${data.url_unwrapping.redirect_chain.map(url => `<li>${url}</li>`).join('')}</ol>` : ''}
+                           </div>` : 
+                          `<p><strong>URL:</strong> ${data.url}</p>`
+                        }
+                        <p><strong>Verdict:</strong> ${data.analysis.verdict}</p>
+                        <p><strong>Service:</strong> ${data.service || 'Multiple Security Services'}</p>
+                        ${data.analysis.threat_details ? 
+                          `<p><strong>Threat Type:</strong> ${data.analysis.threat_details.type || 'Unknown'}</p>
+                           <p><strong>Severity:</strong> ${data.analysis.threat_details.severity || 'High'}</p>` : ''}
+                        ${data.message ? `<p><strong>Message:</strong> ${data.message}</p>` : ''}
+                        ${data.analysis.vt_detections ? `<p><strong>VirusTotal Detections:</strong> ${data.analysis.vt_detections}</p>` : ''}
+                        ${data.analysis.domain_age_days ? `<p><strong>Domain Age:</strong> ${data.analysis.domain_age_days} days</p>` : ''}
+                        ${data.analysis.is_shared_domain ? 
+                          `<div class="shared-domain-info">
+                            <p><strong>Shared Domain Platform:</strong> Yes</p>
+                            ${data.analysis.shared_domain_details ? 
+                              `<p><strong>Platform:</strong> ${data.analysis.shared_domain_details.platform || 'Unknown'}</p>
+                               <p><strong>Category:</strong> ${data.analysis.shared_domain_details.category || 'Unknown'}</p>
+                               <p><strong>Risk Level:</strong> <span class="risk-${data.analysis.shared_domain_details.risk_level || 'unknown'}">${data.analysis.shared_domain_details.risk_level || 'Unknown'}</span></p>
+                               ${data.analysis.shared_domain_details.description ? 
+                                `<p><strong>Description:</strong> ${data.analysis.shared_domain_details.description}</p>` : ''}` : ''}
+                           </div>` : ''}
+                        ${data.analysis.heuristic_flags && data.analysis.heuristic_flags.length > 0 ? 
+                          `<p><strong>Heuristic Analysis Flags:</strong></p><ul>${data.analysis.heuristic_flags.map(flag => `<li>${flag}</li>`).join('')}</ul>` : ''}
+                        <p><strong>Recommended Action:</strong> ${data.recommended_action || 'Avoid accessing this URL'}</p>
+                        <p><strong>Analysis Time:</strong> ${data.timestamp}</p>
+                    `;
+                } else {
+                    // Fallback for any other verdict
+                    resultContainer.className = 'result-container suspicious';
+                    resultHTML = `
+                        <h3>Analysis Results</h3>
+                        <p><strong>URL:</strong> ${data.url}</p>
+                        <p><strong>Verdict:</strong> ${data.analysis.verdict}</p>
+                        ${data.service ? `<p><strong>Service:</strong> ${data.service}</p>` : ''}
+                        ${data.message ? `<p><strong>Message:</strong> ${data.message}</p>` : ''}
+                        ${data.recommended_action ? `<p><strong>Recommended Action:</strong> ${data.recommended_action}</p>` : ''}
+                        <p><strong>Analysis Time:</strong> ${data.timestamp}</p>
+                    `;
+                }
+                
+                resultDetails.innerHTML = resultHTML;
+                
+                // Add AI analysis section if available
+                if (data.ai_analysis) {
+                    const aiSection = document.createElement('div');
+                    aiSection.className = 'ai-analysis';
+                    // Check if this is a rate limit error
+                    const isRateLimit = data.ai_analysis.explanation && (
+                        data.ai_analysis.explanation.includes("rate limit") || 
+                        data.ai_analysis.explanation.includes("quota") ||
+                        data.ai_analysis.explanation.includes("capacity")
+                    );
+                    
+                    // Set the right title based on whether this is a rate limit error
+                    const aiTitle = isRateLimit ? 'Enhanced Analysis' : 'AI-Powered Analysis';
+                    
+                    aiSection.innerHTML = `
+                        <h3>${aiTitle}</h3>
+                        <p><strong>Verdict:</strong> <span class="ai-verdict">${data.ai_analysis.verdict === 'ERROR' ? 'Automatic Analysis' : data.ai_analysis.verdict}</span></p>
+                        <p><strong>Explanation:</strong> ${data.ai_analysis.explanation}</p>
+                    `;
+                    resultDetails.appendChild(aiSection);
+                }
+            } catch (error) {
+                resultContainer.className = 'result-container';
+                const errorMessageElem = document.getElementById('errorMessage');
+                errorMessageElem.textContent = `Error: ${error.message}`;
+                errorMessageElem.style.display = 'block';
+                resultContainer.style.display = 'none';
+                
+                // Clear status message
+                const statusMessage = document.getElementById('statusMessage');
+                if (statusMessage) {
+                    statusMessage.style.display = 'none';
+                }
+            }
+            
+            // Hide loader and status message, show results
+            loader.style.display = 'none';
+            statusMessage.style.display = 'none';
+            resultContainer.style.display = 'block';
+        }
+        
+        // Main form submission
+        document.getElementById('mainForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const url = urlInput.value.trim();
+            if (url) {
+                await analyzeQrCodeText(url);
+            } else if (urlInput.getAttribute('data-image')) {
+                // Image already processed when it was pasted/uploaded
+                // No need to do anything more here
+            } else {
+                // No input provided
+                const errorMessage = document.getElementById('errorMessage');
+                if (errorMessage) {
+                    errorMessage.textContent = 'Please enter a URL or provide a QR code image';
+                    errorMessage.style.display = 'block';
+                    setTimeout(() => {
+                        errorMessage.style.display = 'none';
+                    }, 3000);
+                }
+            }
+        });
+        
+        // Initialize QR Code scanner variables
+        let html5QrCode = null;
+        const qrCodeSuccessCallback = async (decodedText, decodedResult) => {
+            // Stop scanning after successful scan
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop();
+                document.getElementById('startScanButton').style.display = 'inline-block';
+                document.getElementById('stopScanButton').style.display = 'none';
+            }
+            
+            // Call the analysis function with the decoded URL
+            await analyzeQrCodeText(decodedText);
+        };
+        
+        const qrCodeErrorCallback = (errorMessage, error) => {
+            // We can ignore errors as they happen frequently during scanning
+            // console.log(errorMessage);
+        };
+        
+        // QR Code live scanner logic
+        document.getElementById('startScanButton').addEventListener('click', async function() {
+            document.getElementById('qr-reader').style.display = 'block';
+            document.getElementById('startScanButton').style.display = 'none';
+            document.getElementById('stopScanButton').style.display = 'inline-block';
+            
+            try {
+                // Initialize QR scanner if not already initialized
+                if (!html5QrCode) {
+                    html5QrCode = new Html5Qrcode("qr-reader");
+                }
+                
+                // Enhanced configuration for better QR detection
+                const config = { 
+                    fps: 15,  // Increased frame rate
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0,
+                    formatsToSupport: [
+                        Html5QrcodeSupportedFormats.QR_CODE,
+                        Html5QrcodeSupportedFormats.AZTEC,
+                        Html5QrcodeSupportedFormats.DATA_MATRIX
+                    ],
+                    experimentalFeatures: {
+                        useBarCodeDetectorIfSupported: true
+                    }
+                };
+                
+                // Start scanning with optimized settings
+                await html5QrCode.start(
+                    { facingMode: "environment" }, // Use rear camera if available
+                    config,
+                    qrCodeSuccessCallback,
+                    qrCodeErrorCallback
+                );
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = `Error starting camera: ${error.message}`;
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('startScanButton').style.display = 'inline-block';
+                document.getElementById('stopScanButton').style.display = 'none';
+            }
+        });
+        
+        // Stop button for QR scanner
+        document.getElementById('stopScanButton').addEventListener('click', async function() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                await html5QrCode.stop();
+                document.getElementById('qr-reader').style.display = 'none';
+                document.getElementById('startScanButton').style.display = 'inline-block';
+                document.getElementById('stopScanButton').style.display = 'none';
+            }
+        });
+        
+        // File upload QR scanner
+        document.getElementById('qr-file-input').addEventListener('change', function(e) {
+            processQRImageFile(e.target.files[0]);
+        });
+        
+        // Process a QR image file (common function for all input methods)
+        function processQRImageFile(file) {
+            if (!file) {
+                return;
+            }
+            
+            // Update UI to show selected file if element exists
+            const fileNameElement = document.getElementById('file-name');
+            if (fileNameElement) {
+                fileNameElement.textContent = `Selected file: ${file.name}`;
+            }
+            
+            // Initialize QR scanner if not already initialized
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("qr-reader");
+            }
+            
+            // Reset error message
+            const errorMessage = document.getElementById('errorMessage');
+            if (errorMessage) {
+                errorMessage.style.display = 'none';
+            }
+            
+            // Show loader
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.display = 'block';
+            }
+            
+            // Create image element to get dimensions for optimized scanning
+            const img = new Image();
+            img.onload = function() {
+                URL.revokeObjectURL(img.src); // Clean up
+                
+                // Enhanced scanning options for better detection
+                const scanConfig = {
+                    experimentalFeatures: {
+                        useBarCodeDetectorIfSupported: true, // Use native API if available
+                        tryHarder: true
+                    }
+                };
+                
+                // Try multiple scanning methods to increase chance of detection
+                tryScanWithMultipleOptions(file);
+            };
+            
+            img.onerror = function() {
+                URL.revokeObjectURL(img.src);
+                if (loader) loader.style.display = 'none';
+                if (errorMessage) {
+                    errorMessage.textContent = 'Unable to load the image file.';
+                    errorMessage.style.display = 'block';
+                }
+            };
+            
+            img.src = URL.createObjectURL(file);
+            
+            // Log for debugging
+            console.log("Processing QR image file:", file.name, file.type, file.size);
+        }
+        
+        // Try multiple scanning configurations to maximize chances of QR code detection
+        async function tryScanWithMultipleOptions(file) {
+            try {
+                console.log("Starting QR code detection with file:", file.name, file.type, file.size);
+                // Show status
+                const statusMessage = document.getElementById('statusMessage');
+                if (statusMessage) {
+                    statusMessage.textContent = 'Reading QR code from image...';
+                    statusMessage.style.display = 'block';
+                }
+                
+                // First attempt: Default scan with Html5Qrcode
+                try {
+                    console.log("Attempting scan with Html5Qrcode...");
+                    const decodedText = await html5QrCode.scanFile(file, true);
+                    console.log("Success with Html5Qrcode:", decodedText);
+                    await analyzeQrCodeText(decodedText);
+                    return;
+                } catch (err) {
+                    console.log("First attempt failed:", err.message);
+                    console.log("Trying alternative methods...");
+                }
+                
+                // Second attempt: Using jsQR as fallback
+                if (typeof jsQR === 'undefined') {
+                    console.log("Loading jsQR library...");
+                    await loadJsQR();
+                }
+                
+                // Use jsQR for detection
+                console.log("Attempting scan with jsQR...");
+                try {
+                    const result = await scanWithJsQR(file);
+                    if (result) {
+                        console.log("Success with jsQR:", result);
+                        await analyzeQrCodeText(result);
+                        return;
+                    } else {
+                        console.log("jsQR returned no results");
+                    }
+                } catch (jsQrErr) {
+                    console.log("jsQR scan failed:", jsQrErr.message);
+                }
+                
+                // If all attempts fail
+                throw new Error("QR code detection failed with all methods");
+                
+            } catch (error) {
+                console.error("QR detection error:", error);
+                // Hide loader
+                const loader = document.getElementById('loader');
+                if (loader) loader.style.display = 'none';
+                
+                // Show error message with more helpful guidance
+                const errorMessage = document.getElementById('errorMessage');
+                if (errorMessage) {
+                    errorMessage.textContent = 
+                        'QR code detection failed. Please try: 1) A clearer image, 2) Make sure the QR code has adequate contrast, 3) Ensure the entire QR code is visible.';
+                    errorMessage.style.display = 'block';
+                }
+            }
+        }
+        
+        // Load jsQR library dynamically
+        function loadJsQR() {
+            return new Promise((resolve, reject) => {
+                if (typeof jsQR !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+        
+        // Scan with jsQR library as an alternative method
+        function scanWithJsQR(file) {
+            return new Promise((resolve, reject) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                img.onload = function() {
+                    console.log("Image loaded for jsQR processing:", img.width, "x", img.height);
+                    
+                    // Set canvas dimensions to match image
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Draw image on canvas
+                    ctx.drawImage(img, 0, 0);
+                    
+                    try {
+                        // Get image data for QR processing
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        console.log("Image data extracted:", imageData.width, "x", imageData.height);
+                        
+                        // Check if jsQR is available
+                        if (typeof jsQR !== 'function') {
+                            console.error("jsQR function is not available");
+                            reject(new Error("jsQR library not loaded correctly"));
+                            return;
+                        }
+                        
+                        // Try different inversion attempts for better detection
+                        const inversionAttempts = ["dontInvert", "onlyInvert", "invertFirst", "attemptBoth"];
+                        
+                        for (const attempt of inversionAttempts) {
+                            console.log(`Trying jsQR with inversionAttempt: ${attempt}`);
+                            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                                inversionAttempts: attempt
+                            });
+                            
+                            if (code) {
+                                console.log(`QR code found with ${attempt}:`, code.data);
+                                URL.revokeObjectURL(img.src);
+                                resolve(code.data);
+                                return;
+                            }
+                        }
+                        
+                        // If all attempts fail
+                        console.log("No QR code found with any inversion attempt");
+                        reject(new Error("No QR code found in image"));
+                    } catch (error) {
+                        console.error("Error in jsQR processing:", error);
+                        reject(error);
+                    }
+                    
+                    // Clean up
+                    URL.revokeObjectURL(img.src);
+                };
+                
+                img.onerror = function(error) {
+                    console.error("Error loading image for jsQR:", error);
+                    URL.revokeObjectURL(img.src);
+                    reject(new Error("Failed to load image"));
+                };
+                
+                const imageUrl = URL.createObjectURL(file);
+                console.log("Image URL created for jsQR:", imageUrl);
+                img.src = imageUrl;
+            });
+        }
+        
+        // Drag and drop functionality
+        const dragDropArea = document.getElementById('drag-drop-area');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dragDropArea.style.backgroundColor = '#e8f0fe';
+            dragDropArea.style.borderColor = '#4285f4';
+            dragDropArea.style.boxShadow = '0 0 10px rgba(66, 133, 244, 0.3)';
+            dragDropArea.style.transform = 'scale(1.01)';
+        }
+        
+        function unhighlight() {
+            dragDropArea.style.backgroundColor = '#f7faff';
+            dragDropArea.style.borderColor = '#d0e0fd';
+            dragDropArea.style.boxShadow = 'none';
+            dragDropArea.style.transform = 'scale(1)';
+        }
+        
+        dragDropArea.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0) {
+                const file = files[0];
+                
+                // Display image preview
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    imagePreview.src = event.target.result;
+                    imagePreviewContainer.style.display = 'flex';
+                    urlInput.style.opacity = '0.2';
+                    
+                    // Store the image data to process later
+                    urlInput.setAttribute('data-image', 'dropped');
+                };
+                reader.readAsDataURL(file);
+                
+                processQRImageFile(file);
+            }
+        }
+        
+        // Paste functionality
+        document.addEventListener('paste', handlePaste);
+        
+        // Also handle click on paste button
+        document.getElementById('paste-button').addEventListener('click', function() {
+            navigator.clipboard.read()
+                .then(clipboardItems => {
+                    for (const clipboardItem of clipboardItems) {
+                        if (clipboardItem.types.includes('image/png') || 
+                            clipboardItem.types.includes('image/jpeg') || 
+                            clipboardItem.types.includes('image/gif') || 
+                            clipboardItem.types.includes('image/webp')) {
+                            
+                            // Get the image blob
+                            const imageType = clipboardItem.types.find(type => type.startsWith('image/'));
+                            clipboardItem.getType(imageType)
+                                .then(blob => {
+                                    const file = new File([blob], "pasted-image.png", { type: blob.type });
+                                    processQRImageFile(file);
+                                })
+                                .catch(error => {
+                                    document.getElementById('errorMessage').textContent = 'Failed to paste image. Try copying the image again.';
+                                    document.getElementById('errorMessage').style.display = 'block';
+                                });
+                            break;
+                        }
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('errorMessage').textContent = 'No image in clipboard or clipboard access denied.';
+                    document.getElementById('errorMessage').style.display = 'block';
+                });
+        });
+        
+        function handlePaste(e) {
+            // Check if paste contains image data
+            if (e.clipboardData && e.clipboardData.files.length > 0) {
+                const file = e.clipboardData.files[0];
+                if (file.type.startsWith('image/')) {
+                    e.preventDefault();
+                    processQRImageFile(file);
+                }
+            }
+        }
+        
+        // Add style and behavior enhancements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Style hover effects
+            const actionIcons = document.querySelectorAll('.action-icon');
+            actionIcons.forEach(icon => {
+                icon.addEventListener('mouseover', function() {
+                    this.style.backgroundColor = '#e8f0fe';
+                    this.style.boxShadow = '0 2px 5px rgba(0,0,0,0.15)';
+                    this.style.transform = 'translateY(-1px)';
+                });
+                icon.addEventListener('mouseout', function() {
+                    this.style.backgroundColor = '#f5f5f5';
+                    this.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+            
+            // Focus input on page load
+            urlInput.focus();
+            
+            // Initialize dropdown menu functionality
+            const dropdownButton = document.getElementById('dropdown-button');
+            const dropdownMenu = document.getElementById('dropdown-menu');
+            const liveScanOption = document.getElementById('live-scan-option');
+            const chromeExtensionOption = document.getElementById('chrome-extension-option');
+            const imagePreviewContainer = document.getElementById('image-preview-container');
+            const imagePreview = document.getElementById('image-preview');
+            const removeImageBtn = document.getElementById('remove-image');
+            
+            // Handle dropdown toggle
+            dropdownButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (dropdownMenu.style.display === 'block') {
+                    dropdownMenu.style.display = 'none';
+                } else {
+                    dropdownMenu.style.display = 'block';
+                }
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function() {
+                dropdownMenu.style.display = 'none';
+            });
+            
+            // Prevent dropdown from closing when clicking inside it
+            dropdownMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+            
+            // Handle live scan option
+            liveScanOption.addEventListener('click', function() {
+                dropdownMenu.style.display = 'none';
+                startQrScanner();
+            });
+            
+            // Handle Chrome extension option
+            chromeExtensionOption.addEventListener('click', function() {
+                dropdownMenu.style.display = 'none';
+                alert("Chrome Extension feature is coming soon!");
+            });
+            
+            // Handle removing pasted image
+            removeImageBtn.addEventListener('click', function() {
+                imagePreviewContainer.style.display = 'none';
+                urlInput.style.opacity = '1';
+                // Clear any stored image data
+                urlInput.setAttribute('data-image', '');
+            });
+            
+            // Enhanced paste handling for images
+            urlInput.addEventListener('paste', function(e) {
+                // Check if paste contains image data
+                if (e.clipboardData && e.clipboardData.files.length > 0) {
+                    const file = e.clipboardData.files[0];
+                    if (file.type.startsWith('image/')) {
+                        e.preventDefault();
+                        
+                        // Display image preview
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            imagePreview.src = event.target.result;
+                            imagePreviewContainer.style.display = 'flex';
+                            urlInput.style.opacity = '0.2';
+                            
+                            // Store the image data to process later
+                            urlInput.setAttribute('data-image', 'pasted');
+                            
+                            // Process the QR code
+                            processQRImageFile(file);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }
+            });
+            
+            // Initialize summary section
+            const summaryContainer = document.querySelector('.summary-container');
+            const toggleSummaryBtn = document.getElementById('toggle-summary');
+            
+            // Set initial state to expanded (show summary by default)
+            summaryContainer.style.maxHeight = '1000px'; // Large enough to show all content
+            
+            // Toggle summary visibility
+            toggleSummaryBtn.addEventListener('click', function() {
+                if (summaryContainer.style.maxHeight !== '0px') {
+                    // Currently expanded, collapse it
+                    summaryContainer.style.maxHeight = '0px';
+                    toggleSummaryBtn.textContent = 'Show More';
+                } else {
+                    // Currently collapsed, expand it
+                    summaryContainer.style.maxHeight = '1000px';
+                    toggleSummaryBtn.textContent = 'Show Less';
+                }
+            });
+            
+            // Setup file input handler explicitly
+            const qrFileInput = document.getElementById('qr-file-input');
+            qrFileInput.addEventListener('change', function(e) {
+                if (this.files && this.files.length > 0) {
+                    const file = this.files[0];
+                    
+                    // Close dropdown menu
+                    dropdownMenu.style.display = 'none';
+                    
+                    // Display image preview
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        imagePreview.src = event.target.result;
+                        imagePreviewContainer.style.display = 'flex';
+                        urlInput.style.opacity = '0.2';
+                        
+                        // Store the image data to process later
+                        urlInput.setAttribute('data-image', 'uploaded');
+                    };
+                    reader.readAsDataURL(file);
+                    
+                    // Process the QR code
+                    processQRImageFile(file);
+                }
+            });
+            
+            // Paste functionality
+            document.addEventListener('paste', function(e) {
+                if (document.activeElement === urlInput || document.activeElement === document.body) {
+                    handlePaste(e);
+                }
+            });
+            
+            // Add paste button functionality if it exists
+            const pasteButton = document.getElementById('paste-button');
+            if (pasteButton) {
+                pasteButton.addEventListener('click', function() {
+                    navigator.clipboard.read()
+                        .then(clipboardItems => {
+                            for (const clipboardItem of clipboardItems) {
+                                if (clipboardItem.types.includes('image/png') || 
+                                    clipboardItem.types.includes('image/jpeg') || 
+                                    clipboardItem.types.includes('image/gif') || 
+                                    clipboardItem.types.includes('image/webp')) {
+                                    
+                                    // Get the image blob
+                                    const imageType = clipboardItem.types.find(type => type.startsWith('image/'));
+                                    clipboardItem.getType(imageType)
+                                        .then(blob => {
+                                            const file = new File([blob], "pasted-image.png", { type: blob.type });
+                                            processQRImageFile(file);
+                                        })
+                                        .catch(error => {
+                                            const errorMessage = document.getElementById('errorMessage');
+                                            if (errorMessage) {
+                                                errorMessage.textContent = 'Failed to paste image. Try copying the image again.';
+                                                errorMessage.style.display = 'block';
+                                            }
+                                        });
+                                    break;
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            const errorMessage = document.getElementById('errorMessage');
+                            if (errorMessage) {
+                                errorMessage.textContent = 'No image in clipboard or clipboard access denied.';
+                                errorMessage.style.display = 'block';
+                            }
+                        });
+                });
+            }
+            
+            // Ensure drag and drop works
+            const dragDropArea = document.getElementById('drag-drop-area');
+            if (dragDropArea) {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dragDropArea.addEventListener(eventName, preventDefaults, false);
+                });
+                
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dragDropArea.addEventListener(eventName, highlight, false);
+                });
+                
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dragDropArea.addEventListener(eventName, unhighlight, false);
+                });
+                
+                dragDropArea.addEventListener('drop', handleDrop, false);
+            }
+        });
+    </script>
+</body>
+</html>

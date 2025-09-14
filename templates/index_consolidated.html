@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Check if a URL or QR code is malicious using advanced security analysis. Detect phishing, malware, and suspicious content.">
+    <meta name="keywords" content="URL checker, QR code scanner, security analysis, phishing detection, malware scanner">
+    <title>Sprintathon 2025 - URL & QR Code Security Analysis</title>
+    
+    <!-- Include QR code scanning libraries -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Sprintathon 2025</h1>
+            <p>Check if a URL or QR code is malicious using our advanced security analysis</p>
+        </header>
+        
+        <!-- Main Input Form -->
+        <div class="form-container">
+            <div class="form-content">
+                <form id="mainForm">
+                    <div class="unified-input-container">
+                        <textarea id="urlInput" class="input-field" placeholder="Enter a URL, paste a link, or drop a QR code image here..."></textarea>
+                        
+                        <!-- Image preview (initially hidden) -->
+                        <div id="image-preview-container" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; align-items: center; padding: 10px;">
+                            <div style="position: relative; max-width: 70px; margin-right: 15px;">
+                                <img id="image-preview" src="" alt="QR Preview" style="max-width: 100%; border-radius: 4px;">
+                                <button id="remove-image" type="button" style="position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; border-radius: 50%; background: #ea4335; color: white; border: none; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Action buttons -->
+                        <div style="display: flex; align-items: center; padding-right: 10px;">
+                            <button type="button" id="features-button" class="icon-button">
+                                <span class="material-icons-round">add</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button type="submit" id="analyze-button" class="button button-primary">
+                            <span class="material-icons-round">search</span>
+                            Analyze
+                        </button>
+                    </div>
+                    
+                    <!-- Features menu (initially hidden) -->
+                    <div id="features-menu" class="dropdown-menu hidden">
+                        <div id="live-scan-option" class="dropdown-item">
+                            <span class="material-icons-round">qr_code_scanner</span>
+                            <span>Live QR scanner</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <label class="dropdown-item" for="qr-file-input">
+                            <span class="material-icons-round">photo_camera</span>
+                            <span>Photo QR scanner</span>
+                        </label>
+                        <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
+                    </div>
+                </form>
+                
+                <!-- QR Scanner Container (initially hidden) -->
+                <div id="qrScannerContainer" style="display: none; margin-top: 20px;">
+                    <div class="info-box primary">
+                        <p class="info-title">Live QR Code Scanner</p>
+                        <p class="info-message">Position the QR code in front of your camera. Once detected, the URL will be automatically analyzed.</p>
+                    </div>
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <button id="stopScanButton" class="button button-secondary">
+                            <span class="material-icons-round">close</span>
+                            Stop Scanning
+                        </button>
+                    </div>
+                    <div id="qr-reader" style="border-radius: 8px; overflow: hidden; border: none; box-shadow: 0 3px 10px rgba(0,0,0,0.1);"></div>
+                </div>
+            </div>
+            
+            <!-- Drag & Drop area -->
+            <div id="drag-drop-area" class="drag-drop-area">
+                <span class="material-icons-round" style="font-size: 32px; color: var(--accent-color); margin-bottom: 10px;">upload_file</span>
+                <p style="color: var(--primary-color); margin: 0;">Drop QR code image here</p>
+            </div>
+        </div>
+        
+        <!-- Loader -->
+        <div id="loader" class="loader" style="display: none;"></div>
+        
+        <!-- Error and status messages -->
+        <div id="errorMessage" class="message error-message" style="display: none;"></div>
+        <div id="statusMessage" class="message status-message" style="display: none;"></div>
+        
+        <!-- Results Container -->
+        <div id="resultContainer" class="result-container" style="display: none;">
+            <h2>Analysis Results</h2>
+            <div id="resultDetails">
+                <!-- Results will be displayed here -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // DOM Elements
+        const urlInput = document.getElementById('urlInput');
+        const mainForm = document.getElementById('mainForm');
+        const featuresButton = document.getElementById('features-button');
+        const featuresMenu = document.getElementById('features-menu');
+        const liveScanOption = document.getElementById('live-scan-option');
+        const qrFileInput = document.getElementById('qr-file-input');
+        const qrScannerContainer = document.getElementById('qrScannerContainer');
+        const stopScanButton = document.getElementById('stopScanButton');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const removeImageBtn = document.getElementById('remove-image');
+        const dragDropArea = document.getElementById('drag-drop-area');
+        const loader = document.getElementById('loader');
+        const errorMessage = document.getElementById('errorMessage');
+        const statusMessage = document.getElementById('statusMessage');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultDetails = document.getElementById('resultDetails');
+        
+        // Features menu toggle
+        featuresButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            featuresMenu.classList.toggle('hidden');
+        });
+        
+        // Close features menu when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!featuresButton.contains(e.target) && !featuresMenu.contains(e.target)) {
+                featuresMenu.classList.add('hidden');
+            }
+        });
+        
+        // Live QR scanner
+        liveScanOption.addEventListener('click', function() {
+            featuresMenu.classList.add('hidden');
+            qrScannerContainer.style.display = 'block';
+            initializeQRScanner();
+        });
+        
+        // Stop QR scanning
+        stopScanButton.addEventListener('click', function() {
+            qrScannerContainer.style.display = 'none';
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop();
+            }
+        });
+        
+        // Photo QR scanner
+        qrFileInput.addEventListener('change', function(e) {
+            if (e.target.files.length === 0) return;
+            
+            const file = e.target.files[0];
+            processQRImage(file);
+        });
+        
+        // Remove image preview
+        removeImageBtn.addEventListener('click', function() {
+            imagePreviewContainer.style.display = 'none';
+            urlInput.style.opacity = '1';
+            urlInput.removeAttribute('data-image');
+        });
+        
+        // Form submission
+        mainForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const urlValue = urlInput.value.trim();
+            if (urlValue) {
+                analyzeURL(urlValue);
+            } else {
+                showError("Please enter a URL or scan a QR code.");
+            }
+        });
+        
+        // Drag and drop functionality
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dragDropArea.classList.add('highlighted');
+        }
+        
+        function unhighlight() {
+            dragDropArea.classList.remove('highlighted');
+        }
+        
+        dragDropArea.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0) {
+                processQRImage(files[0]);
+            }
+        }
+        
+        // Process QR Image from file
+        function processQRImage(file) {
+            if (!file.type.match('image.*')) {
+                showError("Please select an image file.");
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    decodeQRFromImage(img);
+                    
+                    // Show image preview
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.style.display = 'flex';
+                    urlInput.style.opacity = '0.4';
+                };
+                img.src = e.target.result;
+            };
+            
+            reader.onerror = function() {
+                showError("Error reading the image file.");
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        // Decode QR code from image
+        function decodeQRFromImage(img) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            canvas.width = img.width;
+            canvas.height = img.height;
+            context.drawImage(img, 0, 0, img.width, img.height);
+            
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            
+            if (code) {
+                urlInput.value = code.data;
+                analyzeURL(code.data);
+            } else {
+                showError("No QR code found in the image.");
+            }
+        }
+        
+        // QR code scanner
+        let html5QrCode = null;
+        
+        function initializeQRScanner() {
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("qr-reader");
+            }
+            
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            };
+            
+            html5QrCode.start(
+                { facingMode: "environment" },
+                config,
+                onQRCodeSuccess,
+                onQRCodeError
+            );
+        }
+        
+        function onQRCodeSuccess(decodedText) {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop();
+            }
+            qrScannerContainer.style.display = 'none';
+            urlInput.value = decodedText;
+            analyzeURL(decodedText);
+        }
+        
+        function onQRCodeError(error) {
+            // Silent error handling during scanning
+        }
+        
+        // Analyze URL function
+        function analyzeURL(url) {
+            showLoader();
+            hideMessages();
+            
+            fetch('/analyze-url', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url: url })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                hideLoader();
+                displayResults(data);
+            })
+            .catch(error => {
+                hideLoader();
+                let errorMsg = "Error analyzing URL";
+                if (error.detail) {
+                    errorMsg = error.detail;
+                } else if (typeof error === 'object') {
+                    errorMsg = JSON.stringify(error);
+                }
+                showError(errorMsg);
+            });
+        }
+        
+        // Display results
+        function displayResults(data) {
+            resultContainer.style.display = 'block';
+            resultContainer.className = 'result-container';
+            
+            const verdict = data.analysis.verdict.split(' ')[0];
+            
+            // Add class based on verdict
+            if (verdict === 'Safe') {
+                resultContainer.classList.add('safe');
+            } else if (verdict === 'Dangerous') {
+                resultContainer.classList.add('dangerous');
+            } else if (verdict === 'Caution') {
+                resultContainer.classList.add('suspicious');
+            } else if (verdict === 'Invalid') {
+                resultContainer.classList.add('nonexistent');
+            } else if (verdict === 'Pending') {
+                resultContainer.classList.add('pending');
+            }
+            
+            // Build result HTML
+            let resultHTML = `
+                <div class="result-header">
+                    <h3>${data.analysis.verdict}</h3>
+                    <p><strong>URL:</strong> ${data.url}</p>
+                </div>
+            `;
+            
+            // Add message if available
+            if (data.message) {
+                resultHTML += `<p><strong>Analysis:</strong> ${data.message}</p>`;
+            }
+            
+            // Add recommended action if available
+            if (data.recommended_action) {
+                resultHTML += `<p><strong>Recommendation:</strong> ${data.recommended_action}</p>`;
+            }
+            
+            // Add URL unwrapping details if it was a shortened URL
+            if (data.url_unwrapping && data.url_unwrapping.is_shortened) {
+                resultHTML += `
+                    <div class="url-unwrapping">
+                        <p><strong>URL Unwrapping:</strong> This is a shortened URL</p>
+                        <p>Original URL: ${data.url_unwrapping.original_url}</p>
+                        <p>Final destination: ${data.url_unwrapping.final_url}</p>
+                `;
+                
+                if (data.url_unwrapping.redirect_chain && data.url_unwrapping.redirect_chain.length > 0) {
+                    resultHTML += `<p>Redirect chain:</p><ol>`;
+                    data.url_unwrapping.redirect_chain.forEach(url => {
+                        resultHTML += `<li>${url}</li>`;
+                    });
+                    resultHTML += `</ol>`;
+                }
+                
+                resultHTML += `</div>`;
+            }
+            
+            // Add shared domain info if it's a shared domain
+            if (data.analysis.is_shared_domain) {
+                const details = data.analysis.shared_domain_details;
+                resultHTML += `
+                    <div class="shared-domain-info">
+                        <p><strong>Shared Domain Information:</strong></p>
+                        <p>Platform: ${details.platform}</p>
+                        <p>Category: ${details.category}</p>
+                        <p>Risk Level: <span class="risk-${details.risk_level}">${details.risk_level}</span></p>
+                        <p>Description: ${details.description}</p>
+                    </div>
+                `;
+            }
+            
+            // Add heuristic flags if available
+            if (data.analysis.heuristic_flags && data.analysis.heuristic_flags.length > 0) {
+                resultHTML += `
+                    <div class="details">
+                        <p><strong>Suspicious patterns detected:</strong></p>
+                        <ul>
+                `;
+                
+                data.analysis.heuristic_flags.forEach(flag => {
+                    resultHTML += `<li>${flag}</li>`;
+                });
+                
+                resultHTML += `
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            // Add AI analysis if available
+            if (data.ai_analysis) {
+                resultHTML += `
+                    <div class="ai-analysis">
+                        <h4>AI-Powered Analysis</h4>
+                        <p>${data.ai_analysis.explanation}</p>
+                    </div>
+                `;
+            }
+            
+            resultDetails.innerHTML = resultHTML;
+            
+            // Scroll to results
+            resultContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Utility functions
+        function showLoader() {
+            loader.style.display = 'block';
+        }
+        
+        function hideLoader() {
+            loader.style.display = 'none';
+        }
+        
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+        
+        function showStatus(message) {
+            statusMessage.textContent = message;
+            statusMessage.style.display = 'block';
+        }
+        
+        function hideMessages() {
+            errorMessage.style.display = 'none';
+            statusMessage.style.display = 'none';
+        }
+        
+        // Clipboard paste functionality
+        urlInput.addEventListener('paste', function(e) {
+            // If the paste contains an image, process it
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const blob = items[i].getAsFile();
+                    processQRImage(blob);
+                    e.preventDefault();
+                    break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

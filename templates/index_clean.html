@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Check if a URL or QR code is malicious using advanced security analysis. Detect phishing, malware, and suspicious content.">
+    <meta name="keywords" content="URL checker, QR code scanner, security analysis, phishing detection, malware scanner">
+    <title>Sprintathon 2025 - URL & QR Code Security Analysis</title>
+    
+    <!-- Include QR code scanning libraries -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Sprintathon 2025</h1>
+            <p>Check if a URL or QR code is malicious using our advanced security analysis</p>
+        </header>
+        
+        <!-- About section removed as requested -->
+        
+        <!-- Main Input Form -->
+        <div class="form-container">
+            <div class="form-content">
+                <form id="mainForm">
+                    <div class="unified-input-container">
+                        <textarea id="urlInput" class="input-field" placeholder="Paste or type here..."></textarea>
+                        
+                        <!-- Image preview (initially hidden) -->
+                        <div id="image-preview-container" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; align-items: center; padding: 10px;">
+                            <div style="position: relative; max-width: 70px; margin-right: 15px;">
+                                <img id="image-preview" src="" alt="QR Preview" style="max-width: 100%; border-radius: 4px;">
+                                <button id="remove-image" type="button" style="position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; border-radius: 50%; background: #ea4335; color: white; border: none; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Add button -->
+                        <div style="display: flex; align-items: center; padding-right: 10px;">
+                            <button type="button" id="features-button" class="icon-button">
+                                <span class="material-icons-round">add</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button type="submit" id="analyze-button" class="button button-primary">
+                            Analyze
+                        </button>
+                    </div>
+                    
+                    <p id="inputHint" style="text-align: center; margin-top: 10px; color: #5f6368; font-size: 14px;">Enter URL or paste QR image</p>
+                    
+                    <!-- Features menu (initially hidden) -->
+                    <div id="features-menu" style="display: none; position: absolute; right: 10px; top: 50px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px; z-index: 100;">
+                        <div id="live-scan-option" class="dropdown-item">
+                            <span class="material-icons-round">qr_code_scanner</span>
+                            <span>Live QR scanner</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <label class="dropdown-item" for="qr-file-input">
+                            <span class="material-icons-round">photo_camera</span>
+                            <span>Photo QR scanner</span>
+                        </label>
+                        <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
+                    </div>
+                </form>
+                
+                <!-- QR Scanner Container (initially hidden) -->
+                <div id="qrScannerContainer" style="display: none; margin-top: 20px;">
+                    <div style="background-color: #f7faff; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #4285f4;">
+                        <p style="font-weight: 600; color: #4285f4; margin-top: 0;">Live QR Code Scanner</p>
+                        <p style="margin-bottom: 0;">Position the QR code in front of your camera. Once detected, the URL will be automatically analyzed.</p>
+                    </div>
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <button id="stopScanButton" class="button button-primary">Stop Scanning</button>
+                    </div>
+                    <div id="qr-reader" style="border-radius: 8px; overflow: hidden; border: none; box-shadow: 0 3px 10px rgba(0,0,0,0.1);"></div>
+                </div>
+            </div>
+            
+            <!-- Drag & Drop area -->
+            <div id="drag-drop-area" class="drag-drop-area">
+                <span class="material-icons-round" style="font-size: 32px; color: #fbbc04; margin-bottom: 10px;">folder_open</span>
+                <p style="color: #4285f4; margin: 0;">Drop QR code image here</p>
+            </div>
+        </div>
+        
+        <!-- Loader -->
+        <div id="loader" class="loader" style="display: none;"></div>
+        
+        <!-- Error and status messages -->
+        <div id="errorMessage" class="message error-message" style="display: none;"></div>
+        <div id="statusMessage" class="message status-message" style="display: none;"></div>
+        
+        <!-- Results Container -->
+        <div id="resultContainer" class="result-container" style="display: none;">
+            <h2>Analysis Results</h2>
+            <div id="resultDetails">
+                <!-- Results will be displayed here -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // DOM Elements
+        const urlInput = document.getElementById('urlInput');
+        const inputHint = document.getElementById('inputHint');
+        const featuresButton = document.getElementById('features-button');
+        const featuresMenu = document.getElementById('features-menu');
+        const liveScanOption = document.getElementById('live-scan-option');
+        const qrScannerContainer = document.getElementById('qrScannerContainer');
+        const stopScanButton = document.getElementById('stopScanButton');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const removeImageBtn = document.getElementById('remove-image');
+        const dragDropArea = document.getElementById('drag-drop-area');
+        
+        // Summary section removed as requested
+        
+        // Features menu toggle
+        featuresButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            featuresMenu.style.display = featuresMenu.style.display === 'block' ? 'none' : 'block';
+        });
+        
+        // Close features menu when clicking outside
+        document.addEventListener('click', function() {
+            featuresMenu.style.display = 'none';
+        });
+        
+        // Live QR scanner
+        liveScanOption.addEventListener('click', function() {
+            featuresMenu.style.display = 'none';
+            qrScannerContainer.style.display = 'block';
+            initializeQRScanner();
+        });
+        
+        // Stop QR scanning
+        stopScanButton.addEventListener('click', function() {
+            qrScannerContainer.style.display = 'none';
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop();
+            }
+        });
+        
+        // Remove image preview
+        removeImageBtn.addEventListener('click', function() {
+            imagePreviewContainer.style.display = 'none';
+            urlInput.style.opacity = '1';
+            urlInput.removeAttribute('data-image');
+        });
+        
+        // QR code scanner
+        let html5QrCode = null;
+        
+        function initializeQRScanner() {
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("qr-reader");
+            }
+            
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            };
+            
+            html5QrCode.start(
+                { facingMode: "environment" },
+                config,
+                onQRCodeSuccess,
+                onQRCodeError
+            );
+        }
+        
+        function onQRCodeSuccess(decodedText) {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop();
+            }
+            qrScannerContainer.style.display = 'none';
+            urlInput.value = decodedText;
+            analyzeURL(decodedText);
+        }
+        
+        function onQRCodeError(error) {
+            // Silent error handling during scanning
+        }
+        
+        // Form submission
+        document.getElementById('mainForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const url = urlInput.value.trim();
+            if (url) {
+                analyzeURL(url);
+            } else {
+                document.getElementById('errorMessage').textContent = "Please enter a URL or provide a QR code image";
+                document.getElementById('errorMessage').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('errorMessage').style.display = 'none';
+                }, 3000);
+            }
+        });
+        
+        // Analyze URL function
+        async function analyzeURL(url) {
+            const loader = document.getElementById('loader');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultDetails = document.getElementById('resultDetails');
+            const errorMessage = document.getElementById('errorMessage');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            // Reset display
+            resultContainer.style.display = 'none';
+            errorMessage.style.display = 'none';
+            statusMessage.textContent = 'Analyzing URL: ' + url;
+            statusMessage.style.display = 'block';
+            loader.style.display = 'block';
+            
+            try {
+                // Make sure URL starts with http:// or https://
+                let formattedUrl = url;
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    formattedUrl = 'https://' + url;
+                }
+                
+                const response = await fetch('/analyze-url', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: formattedUrl }),
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Create HTML for result based on verdict
+                let resultHTML = '';
+                
+                if (data.analysis && data.analysis.verdict) {
+                    if (data.analysis.safe) {
+                        resultContainer.className = 'result-container safe';
+                        resultHTML = `
+                            <h3>✅ Safe URL</h3>
+                            <p><strong>URL:</strong> ${data.url}</p>
+                            <p><strong>Verdict:</strong> ${data.analysis.verdict}</p>
+                            <p><strong>Analysis Time:</strong> ${data.timestamp}</p>
+                        `;
+                    } else if (data.analysis.verdict.includes("Dangerous")) {
+                        resultContainer.className = 'result-container dangerous';
+                        resultHTML = `
+                            <h3>🚨 Dangerous URL</h3>
+                            <p><strong>URL:</strong> ${data.url}</p>
+                            <p><strong>Verdict:</strong> ${data.analysis.verdict}</p>
+                            <p><strong>Message:</strong> ${data.message || "This URL has been flagged as malicious"}</p>
+                            <p><strong>Recommended Action:</strong> Avoid accessing this URL</p>
+                            <p><strong>Analysis Time:</strong> ${data.timestamp}</p>
+                        `;
+                    } else if (data.analysis.verdict.includes("Suspicious") || data.analysis.verdict.includes("Caution")) {
+                        resultContainer.className = 'result-container suspicious';
+                        resultHTML = `
+                            <h3>⚠️ Suspicious URL</h3>
+                            <p><strong>URL:</strong> ${data.url}</p>
+                            <p><strong>Verdict:</strong> ${data.analysis.verdict}</p>
+                            <p><strong>Message:</strong> ${data.message || "This URL has some suspicious characteristics"}</p>
+                            <p><strong>Analysis Time:</strong> ${data.timestamp}</p>
+                        `;
+                    } else {
+                        resultContainer.className = 'result-container';
+                        resultHTML = `
+                            <h3>Analysis Results</h3>
+                            <p><strong>URL:</strong> ${data.url}</p>
+                            <p><strong>Verdict:</strong> ${data.analysis.verdict}</p>
+                            <p><strong>Analysis Time:</strong> ${data.timestamp}</p>
+                        `;
+                    }
+                } else {
+                    resultContainer.className = 'result-container';
+                    resultHTML = `
+                        <h3>Analysis Results</h3>
+                        <p><strong>URL:</strong> ${data.url}</p>
+                        <p><strong>Message:</strong> ${data.message || "Analysis completed"}</p>
+                        <p><strong>Analysis Time:</strong> ${data.timestamp || new Date().toISOString()}</p>
+                    `;
+                }
+                
+                resultDetails.innerHTML = resultHTML;
+                
+                // Add AI analysis if available
+                if (data.ai_analysis) {
+                    const aiSection = document.createElement('div');
+                    aiSection.style.marginTop = '20px';
+                    aiSection.style.padding = '15px';
+                    aiSection.style.borderRadius = '8px';
+                    aiSection.style.backgroundColor = '#f7faff';
+                    aiSection.style.borderLeft = '4px solid #4285f4';
+                    
+                    aiSection.innerHTML = `
+                        <h3 style="margin-top: 0;">AI-Powered Analysis</h3>
+                        <p><strong>Verdict:</strong> ${data.ai_analysis.verdict}</p>
+                        <p><strong>Explanation:</strong> ${data.ai_analysis.explanation}</p>
+                    `;
+                    resultDetails.appendChild(aiSection);
+                }
+            } catch (error) {
+                errorMessage.textContent = `Error: ${error.message}`;
+                errorMessage.style.display = 'block';
+                resultContainer.style.display = 'none';
+            }
+            
+            // Hide loader and status message, show results
+            loader.style.display = 'none';
+            statusMessage.style.display = 'none';
+            resultContainer.style.display = 'block';
+        }
+        
+        // File upload for QR code images
+        document.getElementById('qr-file-input').addEventListener('change', function(e) {
+            if (this.files && this.files.length > 0) {
+                processQRImage(this.files[0]);
+            }
+        });
+        
+        // Process QR image
+        function processQRImage(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                return;
+            }
+            
+            // Show image preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                imagePreviewContainer.style.display = 'flex';
+                urlInput.style.opacity = '0.2';
+            };
+            reader.readAsDataURL(file);
+            
+            // Initialize QR scanner if needed
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("qr-reader");
+            }
+            
+            // Show status
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = 'Reading QR code from image...';
+            statusMessage.style.display = 'block';
+            
+            // Scan the file
+            html5QrCode.scanFile(file, true)
+                .then(decodedText => {
+                    urlInput.value = decodedText;
+                    statusMessage.style.display = 'none';
+                    analyzeURL(decodedText);
+                })
+                .catch(error => {
+                    document.getElementById('errorMessage').textContent = "Could not read QR code from the image. Please try a clearer image.";
+                    document.getElementById('errorMessage').style.display = 'block';
+                    statusMessage.style.display = 'none';
+                });
+        }
+        
+        // Drag and drop functionality
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dragDropArea.style.borderColor = '#4285f4';
+            dragDropArea.style.backgroundColor = '#e8f0fe';
+        }
+        
+        function unhighlight() {
+            dragDropArea.style.borderColor = '#dadce0';
+            dragDropArea.style.backgroundColor = '';
+        }
+        
+        dragDropArea.addEventListener('drop', function(e) {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processQRImage(files[0]);
+            }
+        });
+        
+        // Handle paste events for images
+        document.addEventListener('paste', function(e) {
+            if (e.clipboardData && e.clipboardData.files.length > 0) {
+                const file = e.clipboardData.files[0];
+                if (file.type.startsWith('image/')) {
+                    e.preventDefault();
+                    processQRImage(file);
+                }
+            }
+        });
+        
+        // Auto-resize textarea
+        urlInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+        
+        // Focus input on page load
+        window.addEventListener('load', function() {
+            urlInput.focus();
+        });
+    </script>
+</body>
+</html>

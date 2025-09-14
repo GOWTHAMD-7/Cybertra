@@ -1,0 +1,19 @@
+Google AI Hackathon: URL Sandbox API Project
+
+Step-by-step process:
+
+1. Outlined high-level architecture and main components for the microservice.
+2. Created FastAPI application skeleton with a POST /analyze-url endpoint.
+3. Added request validation and a placeholder function for URL safety checking.
+4. Saved the initial application code in main.py.
+5. Created process.txt to document project steps.
+6. Implemented the Google Web Risk API integration with proper error handling.
+7. Fixed API request formatting to use GET with multiple threatTypes parameters.
+8. Enhanced API response format to provide more detailed, structured information.
+9. Added a web interface using HTML, CSS, and JavaScript with Jinja2 templates.
+10. Added DNS lookup verification to check if domains actually exist before running Google API check.
+11. Integrated VirusTotal API as a second layer of URL safety verification for URLs that pass Google's check.
+12. Added domain age checking to identify potentially suspicious newly-created domains.
+13. Enhanced VirusTotal integration to handle new URLs by submitting them for scanning and adding proper error handling.
+
+(Continue updating this file as the project progresses.)

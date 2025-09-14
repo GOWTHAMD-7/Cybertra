@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Check if a URL or QR code is malicious using advanced security analysis. Detect phishing, malware, and suspicious content.">
+    <meta name="keywords" content="URL checker, QR code scanner, security analysis, phishing detection, malware scanner">
+    <title>Sprintathon 2025 - URL & QR Code Security Analysis</title>
+    
+    <!-- Include QR code scanning libraries -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#e8f0fe',
+                            100: '#d2e3fc',
+                            200: '#a5c7f9',
+                            300: '#79a9f7',
+                            400: '#4c8df4',
+                            500: '#4285f4', // Google Blue
+                            600: '#3367d6',
+                            700: '#2a56c6',
+                            800: '#1e47b8',
+                            900: '#0d2f91',
+                        },
+                        danger: {
+                            50: '#fdeded',
+                            100: '#fad2d2',
+                            200: '#f6a6a6',
+                            300: '#f27b7b',
+                            400: '#ea4335', // Google Red
+                            500: '#ea4335',
+                            600: '#d23128',
+                            700: '#c01e1e',
+                            800: '#af1616',
+                            900: '#8f0e0e',
+                        },
+                        success: {
+                            400: '#34a853', // Google Green
+                            500: '#34a853',
+                        },
+                        warning: {
+                            400: '#fbbc04', // Google Yellow
+                            500: '#fbbc04',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+    
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --primary-dark: #3367d6;
+            --accent-color: #fbbc04;
+            --danger-color: #ea4335;
+            --success-color: #34a853;
+            --warning-color: #f6ad55;
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --surface-light: #ffffff;
+            --surface-variant: #f8f9fe;
+            --border-color: #dadce0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-full: 9999px;
+            --transition-default: all 0.2s ease-in-out;
+        }
+        
+        /* Input styles */
+        .unified-input-container {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background-color: var(--surface-light);
+            transition: var(--transition-default);
+            overflow: hidden;
+        }
+        
+        .unified-input-container:focus-within {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+        }
+        
+        #urlInput {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: var(--text-primary);
+            padding: 1rem;
+            border: none;
+            outline: none;
+            width: 100%;
+            min-height: 60px;
+            resize: none;
+            background: transparent;
+        }
+        
+        #urlInput::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+        
+        /* Button styles */
+        .button {
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: var(--transition-default);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .button-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .button-primary:hover {
+            background-color: var(--primary-dark);
+            box-shadow: var(--shadow-sm);
+            transform: translateY(-1px);
+        }
+        
+        .button-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            padding: 0;
+        }
+        
+        /* Dropdown styles */
+        .dropdown {
+            position: relative;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: var(--surface-light);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            min-width: 220px;
+            z-index: 100;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transform-origin: top right;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        
+        .dropdown-menu.hidden {
+            transform: scale(0.95);
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .dropdown-item {
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.1s;
+            color: var(--text-primary);
+            font-weight: 400;
+        }
+        
+        .dropdown-item:hover {
+            background-color: var(--surface-variant);
+        }
+        
+        .dropdown-divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 0.25rem 0;
+        }
+        
+        /* Icon button */
+        .icon-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: var(--primary-color);
+            font-size: 24px;
+            transition: var(--transition-default);
+        }
+        
+        .icon-button:hover {
+            background-color: rgba(66, 133, 244, 0.1);
+        }
+        
+        /* Material icons */
+        .material-icons-round {
+            font-size: 20px;
+            line-height: 1;
+        }
+        
+        /* Status containers */
+        .safe {
+            background-color: #e6f4ea;
+            border-left: 5px solid #34a853;
+        }
+        .dangerous {
+            background-color: #fce8e6;
+            border-left: 5px solid #ea4335;
+        }
+        .nonexistent {
+            background-color: #fef7e0;
+            border-left: 5px solid #fbbc04;
+        }
+        .suspicious {
+            background-color: #fef7e0;
+            border-left: 5px solid #f6ad55;
+        }
+        .pending {
+            background-color: #e8eaed;
+            border-left: 5px solid #5f6368;
+        }
+        
+        /* Risk indicators */
+        .risk-very_low { color: #34a853; font-weight: bold; }
+        .risk-low { color: #34a853; font-weight: bold; }
+        .risk-medium-low { color: #888888; font-weight: bold; }
+        .risk-medium { color: #fbbc04; font-weight: bold; }
+        .risk-high { color: #ea4335; font-weight: bold; }
+        .risk-very_high { color: #ea4335; font-weight: bold; text-decoration: underline; }
+        .risk-unknown { color: #5f6368; font-weight: bold; }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 640px) {
+            .form-container { padding: 1rem; }
+            #urlInput { font-size: 0.95rem; }
+            .button { padding: 0.5rem 1rem; }
+            h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+    <div class="max-w-screen-lg mx-auto px-4 py-8">
+        <header class="text-center mb-8">
+            <h1 class="text-primary-500 text-3xl font-bold mb-2">Sprintathon 2025</h1>
+            <p class="text-gray-600">Check if a URL or QR code is malicious using our advanced security analysis</p>
+        </header>
+        
+        <!-- Website Summary Section -->
+        <div class="bg-blue-50 rounded-xl border-l-4 border-primary-500 overflow-hidden transition-all duration-500 mb-6 shadow-sm" id="summary-container">
+            <div class="p-4">
+                <h3 class="text-primary-500 text-lg font-semibold">About This Tool</h3>
+                <p><strong>Purpose:</strong> This security tool analyzes URLs and QR codes to detect potential threats such as phishing, malware, and suspicious content.</p>
+                
+                <div class="mt-4">
+                    <p class="mb-2"><strong>Features:</strong></p>
+                    <ul class="list-disc pl-5 mb-4">
+                        <li class="mb-1"><strong>URL Analysis:</strong> Enter any web address to check its safety</li>
+                        <li class="mb-1"><strong>QR Code Scanning:</strong> Use your device camera to scan QR codes in real-time</li>
+                        <li class="mb-1"><strong>QR Image Processing:</strong> Upload or paste images containing QR codes</li>
+                        <li class="mb-1"><strong>Threat Detection:</strong> Identify phishing attempts, malware, suspicious domains, and more</li>
+                        <li class="mb-1"><strong>URL Unwrapping:</strong> Follow redirect chains to reveal the true destination of shortened URLs</li>
+                        <li class="mb-1"><strong>AI-Enhanced Analysis:</strong> Get detailed explanations of potential risks</li>
+                    </ul>
+                    
+                    <p class="mb-2"><strong>How to use:</strong></p>
+                    <ol class="list-decimal pl-5 mb-4">
+                        <li class="mb-1">Type a URL directly into the input field, or</li>
+                        <li class="mb-1">Paste an image containing a QR code, or</li>
+                        <li class="mb-1">Click the features button to access more options</li>
+                        <li class="mb-1">Drag and drop a QR code image to the drop zone</li>
+                        <li class="mb-1">Review the comprehensive security analysis results</li>
+                    </ol>
+                    
+                    <p><strong>Analysis Results Include:</strong> Safety verdict, domain information, redirect chains, threat details, and recommended actions if threats are detected.</p>
+                </div>
+                
+                <button id="toggle-summary" class="bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-md transition-colors ml-auto block mt-3">
+                    Show Less
+                </button>
+            </div>
+        </div>
+        
+        <!-- Main Input Form -->
+        <div class="shadow-md rounded-xl border border-gray-200 bg-white max-w-3xl mx-auto mb-6">
+            <form id="mainForm" class="p-4">
+                <div class="unified-input-container relative">
+                    <!-- Main input area with placeholder for image preview -->
+                    <div id="input-area" class="relative flex flex-1">
+                        <textarea id="urlInput" name="url" placeholder="Enter a URL or upload an image..." 
+                                  class="w-full min-h-[60px] resize-none border-0 outline-none text-base p-4 font-sans bg-transparent z-10"></textarea>
+                        
+                        <!-- Image preview container (initially hidden) -->
+                        <div id="image-preview-container" class="absolute top-0 left-0 w-full h-full hidden items-center p-3 z-0">
+                            <div class="relative max-w-[70px] mr-4">
+                                <img id="image-preview" src="" alt="QR Preview" class="max-w-full rounded-md border border-gray-200">
+                                <button id="remove-image" class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-danger-500 text-white border-none text-xs cursor-pointer flex items-center justify-center hover:bg-danger-600 transition-colors">
+                                    <span class="material-icons-round" style="font-size: 14px;">close</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions Container -->
+                    <div class="flex items-center pr-2">
+                        <!-- Plus Button -->
+                        <div class="dropdown relative mr-1">
+                            <button id="dropdown-button" type="button" 
+                                    class="icon-button text-primary-500 hover:bg-primary-50">
+                                <span class="material-icons-round">add</span>
+                            </button>
+                            
+                            <!-- Dropdown Menu (initially hidden) -->
+                            <div id="dropdown-menu" class="dropdown-menu hidden">
+                                <div class="dropdown-item" id="live-scan-option">
+                                    <span class="material-icons-round">qr_code_scanner</span>
+                                    <span>Live QR scanner</span>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <label class="dropdown-item" for="qr-file-input">
+                                    <span class="material-icons-round">photo_camera</span>
+                                    <span>Photo QR scanner</span>
+                                </label>
+                                <input type="file" id="qr-file-input" accept="image/*" class="hidden">
+                                <div class="dropdown-divider"></div>
+                                <div class="dropdown-item" id="chrome-extension-option">
+                                    <span class="material-icons-round">extension</span>
+                                    <span>Chrome Extension</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <button type="submit" id="analyze-button" 
+                                class="button button-primary button-icon">
+                            <span class="material-icons-round">send</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <p class="text-center text-gray-500 text-sm mt-2" id="inputHint">Enter URL or paste QR image</p>
+            </form>
+            
+            <!-- QR Live Scanner - Hidden until activated -->
+            <div id="qrLiveContainer" class="hidden p-4">
+                <div class="bg-blue-50 border-l-4 border-primary-500 rounded-lg p-4 mb-4">
+                    <p class="text-primary-500 font-semibold mb-1">Live QR Code Scanner</p>
+                    <p class="text-gray-700 text-sm">Position the QR code in front of your camera. Once detected, the URL will be automatically analyzed.</p>
+                </div>
+                <div class="text-center mb-4">
+                    <button id="stopScanButton" class="bg-danger-500 hover:bg-danger-600 text-white px-4 py-2 rounded-full font-medium shadow-sm transition-all">
+                        Stop Scanning
+                    </button>
+                </div>
+                <div id="qr-reader" class="rounded-lg overflow-hidden shadow-sm"></div>
+            </div>
+            
+            <!-- Drag & Drop area -->
+            <div id="drag-drop-area" class="m-4 border border-dashed border-gray-300 bg-gray-50 rounded-lg p-6 text-center flex flex-col items-center justify-center transition-all cursor-pointer hover:border-primary-400">
+                <span class="material-icons-round text-yellow-400 text-xl mb-2">folder_open</span>
+                <p class="text-primary-500 text-sm">Drop QR code image here</p>
+            </div>
+            
+            <!-- Selected file name display -->
+            <p id="file-name" class="text-center text-sm text-gray-600 mb-4"></p>
+        </div>
+        
+        <!-- Loader -->
+        <div id="loader" class="hidden w-8 h-8 border-4 border-gray-200 border-t-primary-500 rounded-full mx-auto my-6 animate-spin"></div>
+        
+        <!-- Status Messages -->
+        <div id="errorMessage" class="hidden p-4 rounded-xl bg-red-50 border-l-4 border-danger-500 text-danger-800 my-5 shadow-sm animate-fadeIn"></div>
+        <div id="statusMessage" class="hidden p-4 rounded-xl bg-blue-50 border-l-4 border-primary-500 text-primary-800 my-5 shadow-sm animate-fadeIn"></div>
+        
+        <!-- Results Container -->
+        <div id="resultContainer" class="hidden bg-white rounded-xl border border-gray-200 shadow-md p-5 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Analysis Results</h2>
+            <div id="resultDetails">
+                <!-- Results will be displayed here -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Unified input field functionality
+        const urlInput = document.getElementById('urlInput');
+        const inputHint = document.getElementById('inputHint');
+        const qrLiveContainer = document.getElementById('qrLiveContainer');
+        const dropdownButton = document.getElementById('dropdown-button');
+        const dropdownMenu = document.getElementById('dropdown-menu');
+        const liveScanOption = document.getElementById('live-scan-option');
+        const stopScanButton = document.getElementById('stopScanButton');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const removeImageBtn = document.getElementById('remove-image');
+        const summaryContainer = document.getElementById('summary-container');
+        const toggleSummaryBtn = document.getElementById('toggle-summary');
+        
+        // Initialize summary section
+        // Make sure the summary container is visible by default
+        summaryContainer.style.maxHeight = '1000px'; // Large enough to show all content
+        
+        // Toggle summary visibility
+        toggleSummaryBtn.addEventListener('click', function() {
+            if (summaryContainer.style.maxHeight !== '0px') {
+                // Currently expanded, collapse it
+                summaryContainer.style.maxHeight = '0px';
+                toggleSummaryBtn.textContent = 'Show More';
+            } else {
+                // Currently collapsed, expand it
+                summaryContainer.style.maxHeight = '1000px';
+                toggleSummaryBtn.textContent = 'Show Less';
+            }
+        });
+        
+        // Handle dropdown toggle
+        dropdownButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            dropdownMenu.classList.toggle('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function() {
+            dropdownMenu.classList.add('hidden');
+        });
+        
+        // Prevent dropdown from closing when clicking inside it
+        dropdownMenu.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+        
+        // Handle live scan option
+        liveScanOption.addEventListener('click', function() {
+            dropdownMenu.classList.add('hidden');
+            startQrScanner();
+        });
+        
+        // Stop scanning
+        stopScanButton.addEventListener('click', function() {
+            stopQrScanner();
+        });
+        
+        // Handle removing pasted image
+        removeImageBtn.addEventListener('click', function() {
+            imagePreviewContainer.style.display = 'none';
+            urlInput.style.opacity = '1';
+            // Clear any stored image data
+            urlInput.setAttribute('data-image', '');
+        });
+        
+        function startQrScanner() {
+            qrLiveContainer.style.display = 'block';
+            initializeAndStartScanner();
+        }
+        
+        function stopQrScanner() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop();
+            }
+            qrLiveContainer.style.display = 'none';
+        }
+        
+        // Initialize QR Code scanner variables
+        let html5QrCode = null;
+        
+        function initializeAndStartScanner() {
+            try {
+                // Update status
+                const statusMessage = document.getElementById('statusMessage');
+                if (statusMessage) {
+                    statusMessage.textContent = 'Initializing camera for QR scanning...';
+                    statusMessage.style.display = 'block';
+                }
+                
+                // Initialize QR scanner if not already initialized
+                if (!html5QrCode) {
+                    html5QrCode = new Html5Qrcode("qr-reader");
+                }
+                
+                const config = { 
+                    fps: 15,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0,
+                    formatsToSupport: [
+                        Html5QrcodeSupportedFormats.QR_CODE,
+                        Html5QrcodeSupportedFormats.AZTEC,
+                        Html5QrcodeSupportedFormats.DATA_MATRIX
+                    ],
+                    experimentalFeatures: {
+                        useBarCodeDetectorIfSupported: true
+                    }
+                };
+                
+                html5QrCode.start(
+                    { facingMode: "environment" },
+                    config,
+                    qrCodeSuccessCallback,
+                    qrCodeErrorCallback
+                );
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = `Error starting camera: ${error.message}`;
+                document.getElementById('errorMessage').style.display = 'block';
+                qrLiveContainer.style.display = 'none';
+            }
+        }
+        
+        const qrCodeSuccessCallback = async (decodedText, decodedResult) => {
+            // Stop scanning after successful scan
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop();
+                qrLiveContainer.style.display = 'none';
+            }
+            
+            // Call the analysis function with the decoded URL
+            await analyzeQrCodeText(decodedText);
+        };
+        
+        const qrCodeErrorCallback = (errorMessage, error) => {
+            // We can ignore errors as they happen frequently during scanning
+            // console.log(errorMessage);
+        };
+        
+        // Common function to analyze a URL from any source (text input, QR live scan, or QR file upload)
+        async function analyzeQrCodeText(decodedText) {
+            const loader = document.getElementById('loader');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultDetails = document.getElementById('resultDetails');
+            const errorMessage = document.getElementById('errorMessage');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            // Reset display and show loader
+            resultContainer.style.display = 'none';
+            errorMessage.style.display = 'none';
+            statusMessage.textContent = 'Analyzing URL: ' + decodedText;
+            statusMessage.style.display = 'block';
+            loader.style.display = 'block';
+            
+            try {
+                // Make sure URL starts with http:// or https://
+                let formattedUrl = decodedText;
+                if (!decodedText.startsWith('http://') && !decodedText.startsWith('https://')) {
+                    formattedUrl = 'https://' + decodedText;
+                }
+                
+                const response = await fetch('/analyze-url', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: formattedUrl }),
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `Server error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Ensure required fields exist to prevent "cannot read property of undefined" errors
+                if (!data.analysis) {
+                    data.analysis = {};
+                }
+                
+                if (!data.analysis.verdict) {
+                    data.analysis.verdict = "Unknown";
+                }
+                
+                // Create HTML for result
+                let resultHTML = '';
+                
+                if (data.analysis.safe) {
+                    if (data.analysis.verdict === "Pending Analysis") {
+                        resultContainer.className = 'result-container pending';
+                        resultHTML = `
+                            <h3>⏳ Analysis in Progress</h3>
+                            <p><strong>URL:</strong> ${data.url}</p>
+                            <p><strong>Status:</strong> ${data.analysis.verdict}</p>
+                            <p><strong>Service:</strong> ${data.service}</p>
+                            <p><strong>Note:</strong> ${data.analysis.note}</p>
+                            <p><strong>Message:</strong> ${data.message || 'Please check back in a few minutes for complete results.'}</p>
+                            <p><strong>Analysis Time:</strong> ${data.timestamp}</p>
+                        `;
+                    } else {
+                        resultContainer.className = 'result-container safe';
+                        resultHTML = `
+                            <h3>✅ Safe URL</h3>
+                            ${data.url_unwrapping && data.url_unwrapping.is_shortened ? 
+                              `<div class="url-unwrapping">
+                                 <p><strong>Original URL:</strong> ${data.url_unwrapping.original_url}</p>
+                                 <p><strong>Final Destination:</strong> ${data.url_unwrapping.final_url}</p>
+                                 <p><strong>URL Shortener Detected:</strong> Yes</p>
+                                 ${data.url_unwrapping.redirect_chain && data.url_unwrapping.redirect_chain.length > 1 ? 
+                                  `<p><strong>Redirect Chain:</strong></p>
+                                   <ol>${data.url_unwrapping.redirect_chain.map(url => `<li>${url}</li>`).join('')}</ol>` : ''}
+                               </div>` : 
+                              `<p><strong>URL:</strong> ${data.url}</p>`
+                            }
+                            <p><strong>Verdict:</strong> ${data.analysis.verdict}</p>
+                            <p><strong>Service:</strong> ${data.service}</p>
+                            ${data.analysis.domain_age_days ? `<p><strong>Domain Age:</strong> ${data.analysis.domain_age_days} days</p>` : ''}
+                            ${data.analysis.note ? `<p><strong>Note:</strong> ${data.analysis.note}</p>` : ''}
+                            ${data.analysis.is_shared_domain ? 
+                              `<div class="shared-domain-info">
+                                <p><strong>Shared Domain Platform:</strong> Yes</p>
+                                ${data.analysis.shared_domain_details ? 
+                                  `<p><strong>Platform:</strong> ${data.analysis.shared_domain_details.platform || 'Unknown'}</p>
+                                   <p><strong>Category:</strong> ${data.analysis.shared_domain_details.category || 'Unknown'}</p>
+                                   <p><strong>Risk Level:</strong> <span class="risk-${data.analysis.shared_domain_details.risk_level || 'unknown'}">${data.analysis.shared_domain_details.risk_level || 'Unknown'}</span></p>
+                                   ${data.analysis.shared_domain_details.description ? 
+                                    `<p><strong>Description:</strong> ${data.analysis.shared_domain_details.description}</p>` : ''}` : ''}
+                               </div>` : ''}
+                            ${data.message ? `<p><strong>Message:</strong> ${data.message}</p>` : ''}
+                            ${data.analysis.heuristic_flags && data.analysis.heuristic_flags.length > 0 ? 
+                              `<p><strong>Heuristic Analysis Flags:</strong></p><ul>${data.analysis.heuristic_flags.map(flag => `<li>${flag}</li>`).join('')}</ul>` : ''}
+                            <p><strong>Analysis Time:</strong> ${data.timestamp}</p>
+                        `;
+                    }
+                } else if (data.analysis.verdict === "Non-existent" || data.analysis.verdict === "Invalid 🚫") {
+                    resultContainer.className = 'result-container nonexistent';
+                    resultHTML = `
+                        <h3>⚠️ Invalid or Non-existent Domain</h3>
+                        ${data.url_unwrapping && data.url_unwrapping.is_shortened ? 
+                          `<div class="url-unwrapping">
+                             <p><strong>Original URL:</strong> ${data.url_unwrapping.original_url}</p>
+                             <p><strong>Final Destination:</strong> ${data.url_unwrapping.final_url}</p>
+                             <p><strong>URL Shortener Detected:</strong> Yes</p>
+                             ${data.url_unwrapping.redirect_chain && data.url_unwrapping.redirect_chain.length > 1 ? 
+                              `<p><strong>Redirect Chain:</strong></p>
+                               <ol>${data.url_unwrapping.redirect_chain.map(url => `<li>${url}</li>`).join('')}</ol>` : ''}
+                           </div>` : 
+                          `<p><strong>URL:</strong> ${data.url}</p>`
+                        }
+                        <p><strong>Verdict:</strong> ${data.analysis.verdict}</p>
+                        <p><strong>Message:</strong> ${data.message}</p>
+                        <p><strong>Recommended Action:</strong> ${data.recommended_action}</p>
+                        <p><strong>Analysis Time:</strong> ${data.timestamp}</p>
+                    `;
+                } else if (data.analysis.verdict === "Suspicious" || data.analysis.verdict === "Caution ⚠️") {
+                    resultContainer.className = 'result-container suspicious';
+                    resultHTML = `
+                        <h3>⚠️ Suspicious URL</h3>
+                        ${data.url_unwrapping && data.url_unwrapping.is_shortened ? 
+                          `<div class="url-unwrapping">
+                             <p><strong>Original URL:</strong> ${data.url_unwrapping.original_url}</p>
+                             <p><strong>Final Destination:</strong> ${data.url_unwrapping.final_url}</p>
+                             <p><strong>URL Shortener Detected:</strong> Yes</p>
+                             ${data.url_unwrapping.redirect_chain && data.url_unwrapping.redirect_chain.length > 1 ? 
+                              `<p><strong>Redirect Chain:</strong></p>
+                               <ol>${data.url_unwrapping.redirect_chain.map(url => `<li>${url}</li>`).join('')}</ol>` : ''}
+                           </div>` : 
+                          `<p><strong>URL:</strong> ${data.url}</p>`
+                        }
+                        <p><strong>Verdict:</strong> ${data.analysis.verdict}</p>
+                        <p><strong>Service:</strong> ${data.service}</p>
+                        ${data.analysis.vt_detections ? `<p><strong>VirusTotal Detections:</strong> ${data.analysis.vt_detections}</p>` : ''}
+                        ${data.analysis.domain_age_days ? `<p><strong>Domain Age:</strong> ${data.analysis.domain_age_days} days</p>` : ''}
+                        ${data.analysis.is_shared_domain ? 
+                          `<div class="shared-domain-info">
+                            <p><strong>Shared Domain Platform:</strong> Yes</p>
+                            ${data.analysis.shared_domain_details ? 
+                              `<p><strong>Platform:</strong> ${data.analysis.shared_domain_details.platform || 'Unknown'}</p>
+                               <p><strong>Category:</strong> ${data.analysis.shared_domain_details.category || 'Unknown'}</p>
+                               <p><strong>Risk Level:</strong> <span class="risk-${data.analysis.shared_domain_details.risk_level || 'unknown'}">${data.analysis.shared_domain_details.risk_level || 'Unknown'}</span></p>
+                               ${data.analysis.shared_domain_details.description ? 
+                                `<p><strong>Description:</strong> ${data.analysis.shared_domain_details.description}</p>` : ''}` : ''}
+                           </div>` : ''}
+                        ${data.analysis.heuristic_flags && data.analysis.heuristic_flags.length > 0 ? 
+                          `<p><strong>Heuristic Analysis Flags:</strong></p><ul>${data.analysis.heuristic_flags.map(flag => `<li>${flag}</li>`).join('')}</ul>` : ''}
+                        <p><strong>Message:</strong> ${data.message}</p>
+                        <p><strong>Recommended Action:</strong> ${data.recommended_action}</p>
+                        <p><strong>Analysis Time:</strong> ${data.timestamp}</p>
+                    `;
+                } else if (data.analysis.verdict === "Dangerous" || data.analysis.verdict === "Dangerous 🚨") {
+                    resultContainer.className = 'result-container dangerous';
+                    resultHTML = `
+                        <h3>🚨 Dangerous URL</h3>
+                        ${data.url_unwrapping && data.url_unwrapping.is_shortened ? 
+                          `<div class="url-unwrapping">
+                             <p><strong>Original URL:</strong> ${data.url_unwrapping.original_url}</p>
+                             <p><strong>Final Destination:</strong> ${data.url_unwrapping.final_url}</p>
+                             <p><strong>URL Shortener Detected:</strong> Yes</p>
+                             ${data.url_unwrapping.redirect_chain && data.url_unwrapping.redirect_chain.length > 1 ? 
+                              `<p><strong>Redirect Chain:</strong></p>
+                               <ol>${data.url_unwrapping.redirect_chain.map(url => `<li>${url}</li>`).join('')}</ol>` : ''}
+                           </div>` : 
+                          `<p><strong>URL:</strong> ${data.url}</p>`
+                        }
+                        <p><strong>Verdict:</strong> ${data.analysis.verdict}</p>
+                        <p><strong>Service:</strong> ${data.service || 'Multiple Security Services'}</p>
+                        ${data.analysis.threat_details ? 
+                          `<p><strong>Threat Type:</strong> ${data.analysis.threat_details.type || 'Unknown'}</p>
+                           <p><strong>Severity:</strong> ${data.analysis.threat_details.severity || 'High'}</p>` : ''}
+                        ${data.message ? `<p><strong>Message:</strong> ${data.message}</p>` : ''}
+                        ${data.analysis.vt_detections ? `<p><strong>VirusTotal Detections:</strong> ${data.analysis.vt_detections}</p>` : ''}
+                        ${data.analysis.domain_age_days ? `<p><strong>Domain Age:</strong> ${data.analysis.domain_age_days} days</p>` : ''}
+                        ${data.analysis.is_shared_domain ? 
+                          `<div class="shared-domain-info">
+                            <p><strong>Shared Domain Platform:</strong> Yes</p>
+                            ${data.analysis.shared_domain_details ? 
+                              `<p><strong>Platform:</strong> ${data.analysis.shared_domain_details.platform || 'Unknown'}</p>
+                               <p><strong>Category:</strong> ${data.analysis.shared_domain_details.category || 'Unknown'}</p>
+                               <p><strong>Risk Level:</strong> <span class="risk-${data.analysis.shared_domain_details.risk_level || 'unknown'}">${data.analysis.shared_domain_details.risk_level || 'Unknown'}</span></p>
+                               ${data.analysis.shared_domain_details.description ? 
+                                `<p><strong>Description:</strong> ${data.analysis.shared_domain_details.description}</p>` : ''}` : ''}
+                           </div>` : ''}
+                        ${data.analysis.heuristic_flags && data.analysis.heuristic_flags.length > 0 ? 
+                          `<p><strong>Heuristic Analysis Flags:</strong></p><ul>${data.analysis.heuristic_flags.map(flag => `<li>${flag}</li>`).join('')}</ul>` : ''}
+                        <p><strong>Recommended Action:</strong> ${data.recommended_action || 'Avoid accessing this URL'}</p>
+                        <p><strong>Analysis Time:</strong> ${data.timestamp}</p>
+                    `;
+                } else {
+                    // Fallback for any other verdict
+                    resultContainer.className = 'result-container suspicious';
+                    resultHTML = `
+                        <h3>Analysis Results</h3>
+                        <p><strong>URL:</strong> ${data.url}</p>
+                        <p><strong>Verdict:</strong> ${data.analysis.verdict}</p>
+                        ${data.service ? `<p><strong>Service:</strong> ${data.service}</p>` : ''}
+                        ${data.message ? `<p><strong>Message:</strong> ${data.message}</p>` : ''}
+                        ${data.recommended_action ? `<p><strong>Recommended Action:</strong> ${data.recommended_action}</p>` : ''}
+                        <p><strong>Analysis Time:</strong> ${data.timestamp}</p>
+                    `;
+                }
+                
+                resultDetails.innerHTML = resultHTML;
+                
+                // Add AI analysis section if available
+                if (data.ai_analysis) {
+                    const aiSection = document.createElement('div');
+                    aiSection.className = 'mt-6 p-4 rounded-lg bg-gray-50 border-l-4 border-primary-500';
+                    // Check if this is a rate limit error
+                    const isRateLimit = data.ai_analysis.explanation && (
+                        data.ai_analysis.explanation.includes("rate limit") || 
+                        data.ai_analysis.explanation.includes("quota") ||
+                        data.ai_analysis.explanation.includes("capacity")
+                    );
+                    
+                    // Set the right title based on whether this is a rate limit error
+                    const aiTitle = isRateLimit ? 'Enhanced Analysis' : 'AI-Powered Analysis';
+                    
+                    aiSection.innerHTML = `
+                        <h3 class="text-lg font-semibold mb-2">${aiTitle}</h3>
+                        <p class="mb-2"><strong>Verdict:</strong> <span class="font-semibold">${data.ai_analysis.verdict === 'ERROR' ? 'Automatic Analysis' : data.ai_analysis.verdict}</span></p>
+                        <p><strong>Explanation:</strong> ${data.ai_analysis.explanation}</p>
+                    `;
+                    resultDetails.appendChild(aiSection);
+                }
+            } catch (error) {
+                resultContainer.className = 'bg-white rounded-xl border border-gray-200 shadow-md p-5';
+                const errorMessageElem = document.getElementById('errorMessage');
+                errorMessageElem.textContent = `Error: ${error.message}`;
+                errorMessageElem.style.display = 'block';
+                resultContainer.style.display = 'none';
+                
+                // Clear status message
+                const statusMessage = document.getElementById('statusMessage');
+                if (statusMessage) {
+                    statusMessage.style.display = 'none';
+                }
+            }
+            
+            // Hide loader and status message, show results
+            loader.style.display = 'none';
+            statusMessage.style.display = 'none';
+            resultContainer.style.display = 'block';
+        }
+        
+        // Main form submission
+        document.getElementById('mainForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const url = urlInput.value.trim();
+            if (url) {
+                await analyzeQrCodeText(url);
+            } else if (urlInput.getAttribute('data-image')) {
+                // Image already processed when it was pasted/uploaded
+                // No need to do anything more here
+            } else {
+                // No input provided
+                const errorMessage = document.getElementById('errorMessage');
+                if (errorMessage) {
+                    errorMessage.textContent = 'Please enter a URL or provide a QR code image';
+                    errorMessage.style.display = 'block';
+                    setTimeout(() => {
+                        errorMessage.style.display = 'none';
+                    }, 3000);
+                }
+            }
+        });
+        
+        // File upload QR scanner
+        document.getElementById('qr-file-input').addEventListener('change', function(e) {
+            processQRImageFile(e.target.files[0]);
+        });
+        
+        // Process a QR image file (common function for all input methods)
+        function processQRImageFile(file) {
+            if (!file) {
+                return;
+            }
+            
+            // Update UI to show selected file if element exists
+            const fileNameElement = document.getElementById('file-name');
+            if (fileNameElement) {
+                fileNameElement.textContent = `Selected file: ${file.name}`;
+            }
+            
+            // Initialize QR scanner if not already initialized
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("qr-reader");
+            }
+            
+            // Reset error message
+            const errorMessage = document.getElementById('errorMessage');
+            if (errorMessage) {
+                errorMessage.style.display = 'none';
+            }
+            
+            // Show loader
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.display = 'block';
+            }
+            
+            // Create image element to get dimensions for optimized scanning
+            const img = new Image();
+            img.onload = function() {
+                URL.revokeObjectURL(img.src); // Clean up
+                
+                // Try multiple scanning methods to increase chance of detection
+                tryScanWithMultipleOptions(file);
+            };
+            
+            img.onerror = function() {
+                URL.revokeObjectURL(img.src);
+                if (loader) loader.style.display = 'none';
+                if (errorMessage) {
+                    errorMessage.textContent = 'Unable to load the image file.';
+                    errorMessage.style.display = 'block';
+                }
+            };
+            
+            img.src = URL.createObjectURL(file);
+        }
+        
+        // Try multiple scanning configurations to maximize chances of QR code detection
+        async function tryScanWithMultipleOptions(file) {
+            try {
+                // Show status
+                const statusMessage = document.getElementById('statusMessage');
+                if (statusMessage) {
+                    statusMessage.textContent = 'Reading QR code from image...';
+                    statusMessage.style.display = 'block';
+                }
+                
+                // First attempt: Default scan with Html5Qrcode
+                try {
+                    const decodedText = await html5QrCode.scanFile(file, true);
+                    await analyzeQrCodeText(decodedText);
+                    return;
+                } catch (err) {
+                    console.log("First attempt failed:", err.message);
+                }
+                
+                // Second attempt: Using jsQR as fallback
+                if (typeof jsQR === 'undefined') {
+                    await loadJsQR();
+                }
+                
+                // Use jsQR for detection
+                try {
+                    const result = await scanWithJsQR(file);
+                    if (result) {
+                        await analyzeQrCodeText(result);
+                        return;
+                    }
+                } catch (jsQrErr) {
+                    console.log("jsQR scan failed:", jsQrErr.message);
+                }
+                
+                // If all attempts fail
+                throw new Error("QR code detection failed with all methods");
+                
+            } catch (error) {
+                // Hide loader
+                const loader = document.getElementById('loader');
+                if (loader) loader.style.display = 'none';
+                
+                // Show error message with more helpful guidance
+                const errorMessage = document.getElementById('errorMessage');
+                if (errorMessage) {
+                    errorMessage.textContent = 
+                        'QR code detection failed. Please try: 1) A clearer image, 2) Make sure the QR code has adequate contrast, 3) Ensure the entire QR code is visible.';
+                    errorMessage.style.display = 'block';
+                }
+            }
+        }
+        
+        // Load jsQR library dynamically
+        function loadJsQR() {
+            return new Promise((resolve, reject) => {
+                if (typeof jsQR !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+        
+        // Scan with jsQR library as an alternative method
+        function scanWithJsQR(file) {
+            return new Promise((resolve, reject) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                img.onload = function() {
+                    // Set canvas dimensions to match image
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Draw image on canvas
+                    ctx.drawImage(img, 0, 0);
+                    
+                    try {
+                        // Get image data for QR processing
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        
+                        // Try different inversion attempts for better detection
+                        const inversionAttempts = ["dontInvert", "onlyInvert", "invertFirst", "attemptBoth"];
+                        
+                        for (const attempt of inversionAttempts) {
+                            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                                inversionAttempts: attempt
+                            });
+                            
+                            if (code) {
+                                URL.revokeObjectURL(img.src);
+                                resolve(code.data);
+                                return;
+                            }
+                        }
+                        
+                        // If all attempts fail
+                        reject(new Error("No QR code found in image"));
+                    } catch (error) {
+                        reject(error);
+                    }
+                    
+                    // Clean up
+                    URL.revokeObjectURL(img.src);
+                };
+                
+                img.onerror = function(error) {
+                    URL.revokeObjectURL(img.src);
+                    reject(new Error("Failed to load image"));
+                };
+                
+                const imageUrl = URL.createObjectURL(file);
+                img.src = imageUrl;
+            });
+        }
+        
+        // Drag and drop functionality
+        const dragDropArea = document.getElementById('drag-drop-area');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dragDropArea.classList.add('border-primary-500');
+            dragDropArea.classList.add('bg-blue-50');
+            dragDropArea.classList.add('scale-[1.01]');
+        }
+        
+        function unhighlight() {
+            dragDropArea.classList.remove('border-primary-500');
+            dragDropArea.classList.remove('bg-blue-50');
+            dragDropArea.classList.remove('scale-[1.01]');
+        }
+        
+        dragDropArea.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0) {
+                const file = files[0];
+                
+                // Display image preview
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    imagePreview.src = event.target.result;
+                    imagePreviewContainer.style.display = 'flex';
+                    urlInput.style.opacity = '0.2';
+                    
+                    // Store the image data to process later
+                    urlInput.setAttribute('data-image', 'dropped');
+                };
+                reader.readAsDataURL(file);
+                
+                processQRImageFile(file);
+            }
+        }
+        
+        // Paste functionality
+        document.addEventListener('paste', handlePaste);
+        
+        function handlePaste(e) {
+            // Check if paste contains image data
+            if (e.clipboardData && e.clipboardData.files.length > 0) {
+                const file = e.clipboardData.files[0];
+                if (file.type.startsWith('image/')) {
+                    e.preventDefault();
+                    
+                    // Display image preview
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        imagePreview.src = event.target.result;
+                        imagePreviewContainer.style.display = 'flex';
+                        urlInput.style.opacity = '0.2';
+                        
+                        // Store the image data to process later
+                        urlInput.setAttribute('data-image', 'pasted');
+                    };
+                    reader.readAsDataURL(file);
+                    
+                    processQRImageFile(file);
+                }
+            }
+        }
+        
+        // Initialize page functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Focus input on page load
+            urlInput.focus();
+        });
+    </script>
+</body>
+</html>

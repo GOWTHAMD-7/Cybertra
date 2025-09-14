@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Check if a URL or QR code is malicious using advanced security analysis. Detect phishing, malware, and suspicious content.">
+    <meta name="keywords" content="URL checker, QR code scanner, security analysis, phishing detection, malware scanner">
+    <title>Cybertra – Defending Your Digital Path</title>
+    
+    <!-- Include QR code scanning libraries -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <style>
+        /* Main styles for Cybertra */
+        :root {
+            --primary-color: #4285f4;
+            --primary-dark: #3367d6;
+            --primary-light: #e8f0fe;
+            --accent-color: #fbbc04;
+            --danger-color: #ea4335;
+            --success-color: #34a853;
+            --warning-color: #f6ad55;
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --surface-light: #ffffff;
+            --surface-variant: #f8f9fe;
+            --border-color: #dadce0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-full: 9999px;
+            --transition-default: all 0.2s ease-in-out;
+        }
+
+        /* Base styles */
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--surface-variant);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            margin: 0 0 0.5rem;
+            font-weight: 600;
+            line-height: 1.2;
+            color: var(--text-primary);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Form container */
+        .form-container {
+            background-color: var(--surface-light);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+        }
+
+        .form-content {
+            padding: 1.5rem;
+        }
+
+        /* Input container */
+        .unified-input-container {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background-color: var(--surface-light);
+            transition: var(--transition-default);
+            overflow: hidden;
+            position: relative;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .unified-input-container:focus-within {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+        }
+
+        /* Input field */
+        .input-field {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: var(--text-primary);
+            padding: 1rem;
+            border: none;
+            outline: none;
+            width: 100%;
+            min-height: 60px;
+            resize: none;
+            background: transparent;
+        }
+
+        .input-field::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
+        /* Button styles */
+        .button {
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: var(--transition-default);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .button-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .button-primary:hover {
+            background-color: var(--primary-dark);
+            box-shadow: var(--shadow-sm);
+            transform: translateY(-1px);
+        }
+
+        .button-secondary {
+            background-color: var(--surface-variant);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .button-secondary:hover {
+            background-color: var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .button-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            padding: 0;
+        }
+
+        /* Icon button */
+        .icon-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: var(--primary-color);
+            transition: var(--transition-default);
+        }
+
+        .icon-button:hover {
+            background-color: rgba(66, 133, 244, 0.1);
+        }
+
+        /* Dropdown */
+        .dropdown-menu {
+            position: absolute;
+            right: 10px;
+            top: 50px;
+            background: var(--surface-light);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            min-width: 220px;
+            z-index: 100;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transform-origin: top right;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .dropdown-menu.hidden {
+            transform: scale(0.95);
+            opacity: 0;
+            visibility: hidden;
+            display: none;
+        }
+
+        .dropdown-item {
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.1s;
+            color: var(--text-primary);
+            font-weight: 400;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--surface-variant);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 0.25rem 0;
+        }
+
+        /* Drag and drop area */
+        .drag-drop-area {
+            border: 1px dashed var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            text-align: center;
+            margin: 1rem 1.5rem 1.5rem;
+            cursor: pointer;
+            transition: var(--transition-default);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .drag-drop-area:hover, .drag-drop-area.highlighted {
+            border-color: var(--primary-color);
+            background-color: rgba(66, 133, 244, 0.05);
+        }
+
+        /* Messages and alerts */
+        .message {
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: var(--radius-md);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .error-message {
+            background-color: #fce8e6;
+            border-left: 4px solid var(--danger-color);
+            color: #d93025;
+        }
+
+        .status-message {
+            background-color: #e8f0fe;
+            border-left: 4px solid var(--primary-color);
+            color: var(--primary-dark);
+        }
+
+        /* Info boxes */
+        .info-box {
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .info-box.primary {
+            background-color: var(--primary-light);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .info-box.warning {
+            background-color: #fff8e1;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .info-title {
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-box.primary .info-title {
+            color: var(--primary-color);
+        }
+
+        .info-box.warning .info-title {
+            color: var(--accent-color);
+        }
+
+        .info-message {
+            margin-bottom: 0;
+            color: var(--text-secondary);
+        }
+
+        /* Results container */
+        .result-container {
+            background-color: var(--surface-light);
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .result-header {
+            margin-bottom: 1rem;
+        }
+
+        .safe {
+            background-color: #e6f4ea;
+            border-left: 5px solid var(--success-color);
+        }
+
+        .dangerous {
+            background-color: #fce8e6;
+            border-left: 5px solid var(--danger-color);
+        }
+
+        .nonexistent {
+            background-color: #fef7e0;
+            border-left: 5px solid var(--accent-color);
+        }
+
+        .suspicious {
+            background-color: #fef7e0;
+            border-left: 5px solid var(--warning-color);
+        }
+
+        .pending {
+            background-color: #e8eaed;
+            border-left: 5px solid var(--text-secondary);
+        }
+
+        /* AI analysis section */
+        .ai-analysis {
+            background-color: #f8f9fa;
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-top: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .ai-analysis h4 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        /* Webpage summary section */
+        .webpage-summary {
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* Different styles based on safety status */
+        .safe-summary {
+            background-color: #f0f7ff;
+            border: 1px solid #d2e3fc;
+            border-left: 4px solid #4285f4;
+        }
+        
+        .caution-summary {
+            background-color: #fff8e1;
+            border: 1px solid #ffecb3;
+            border-left: 4px solid #ffa000;
+        }
+        
+        .dangerous-summary {
+            background-color: #ffebee;
+            border: 1px solid #ffcdd2;
+            border-left: 4px solid #d32f2f;
+        }
+        
+        .invalid-summary {
+            background-color: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-left: 4px solid #9e9e9e;
+        }
+        
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        
+        .safety-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .safe-badge {
+            background-color: #4285f4;
+        }
+        
+        .caution-badge {
+            background-color: #ffa000;
+        }
+        
+        .dangerous-badge {
+            background-color: #d32f2f;
+        }
+        
+        .invalid-badge {
+            background-color: #9e9e9e;
+        }
+
+        .webpage-summary h4 {
+            color: var(--text-primary);
+            margin-top: 0;
+            margin-bottom: 0;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .webpage-summary h5 {
+            font-size: 1.05rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .summary-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .summary-content {
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 1.25rem;
+            border-radius: var(--radius-sm);
+            margin-bottom: 1.25rem;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .safe-summary .summary-content {
+            border-left: 3px solid #4285f4;
+        }
+        
+        .caution-summary .summary-content {
+            border-left: 3px solid #ffa000;
+        }
+        
+        .dangerous-summary .summary-content {
+            border-left: 3px solid #d32f2f;
+        }
+
+        .summary-metadata {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .keywords {
+            margin-top: 0.5rem;
+        }
+
+        .keyword-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .keyword-tag {
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: inline-block;
+        }
+        
+        .safe-summary .keyword-tag {
+            background-color: rgba(66, 133, 244, 0.1);
+            color: #1a73e8;
+        }
+        
+        .caution-summary .keyword-tag {
+            background-color: rgba(255, 160, 0, 0.1);
+            color: #e65100;
+        }
+        
+        .dangerous-summary .keyword-tag {
+            background-color: rgba(211, 47, 47, 0.1);
+            color: #c62828;
+        }
+        
+        .summary-disclaimer {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-top: 1rem;
+            margin-bottom: 0;
+        }
+        
+        /* Scraping blocked message styles */
+        .scraping-blocked {
+            display: flex;
+            background-color: rgba(0, 0, 0, 0.03);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 1px dashed rgba(0, 0, 0, 0.1);
+            align-items: center;
+        }
+        
+        .blocked-icon {
+            flex-shrink: 0;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1.5rem;
+        }
+        
+        .blocked-icon .material-icons-round {
+            font-size: 28px;
+            color: #9e9e9e;
+        }
+        
+        .blocked-message {
+            flex-grow: 1;
+        }
+        
+        .blocked-message p {
+            margin: 0 0 0.75rem;
+            color: var(--text-primary);
+        }
+        
+        .blocked-message p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .blocked-details {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Chrome extension feature styles */
+        .info-box.feature {
+            background-color: #e8f0fe;
+            border-left-color: #4285f4;
+        }
+        
+        .extension-features {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .extension-feature-item {
+            display: flex;
+            align-items: flex-start;
+            background-color: white;
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .extension-feature-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .feature-icon {
+            background-color: #e8f0fe;
+            color: #4285f4;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            flex-shrink: 0;
+            font-size: 24px;
+        }
+        
+        .feature-text {
+            flex-grow: 1;
+        }
+        
+        .feature-text h4 {
+            margin: 0 0 0.5rem;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+        
+        .feature-text p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .extension-cta {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        /* Coming Soon styles */
+        .coming-soon-banner {
+            background-color: #fef7e0;
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin: 1.5rem 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-left: 4px solid #fbbc04;
+        }
+        
+        .coming-soon-banner .material-icons-round {
+            color: #f9ab00;
+            font-size: 24px;
+            margin-right: 0.75rem;
+        }
+        
+        .coming-soon-banner p {
+            margin: 0;
+            color: #5f6368;
+            font-weight: 500;
+        }
+
+        /* URL unwrapping info */
+        .url-unwrapping {
+            background-color: #f1f3f4;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: var(--radius-md);
+            border-left: 4px solid #5f6368;
+        }
+
+        .url-unwrapping ol {
+            margin-top: 0.5rem;
+            padding-left: 1.5rem;
+        }
+
+        /* Shared domain info */
+        .shared-domain-info {
+            background-color: #f1f3f4;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: var(--radius-md);
+            border-left: 4px solid #5f6368;
+        }
+
+        /* Risk level styles */
+        .risk-very_low {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+
+        .risk-low {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+
+        .risk-medium-low {
+            color: #888888;
+            font-weight: bold;
+        }
+
+        .risk-medium {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .risk-high {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+
+        .risk-very_high {
+            color: var(--danger-color);
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
+        .risk-unknown {
+            color: var(--text-secondary);
+            font-weight: bold;
+        }
+
+        /* Loader */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+
+        /* Animation keyframes */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            h1 {
+                font-size: 1.75rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .form-content {
+                padding: 1rem;
+            }
+            
+            .input-field {
+                font-size: 0.95rem;
+            }
+            
+            .button {
+                padding: 0.5rem 1rem;
+            }
+            
+            .drag-drop-area {
+                margin: 1rem 1rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Cybertra</h1>
+            <h2 style="color: var(--primary-color); font-weight: 500; margin-top: -5px; margin-bottom: 15px;">Defending Your Digital Path</h2>
+            <p>Check if a URL or QR code is malicious using our advanced security analysis</p>
+        </header>
+        
+        <!-- Main Input Form -->
+        <div class="form-container">
+            <div class="form-content">
+                <form id="mainForm">
+                    <div class="unified-input-container">
+                        <textarea id="urlInput" class="input-field" placeholder="Enter a URL, paste a link, or drop a QR code image here..."></textarea>
+                        
+                        <!-- Image preview (initially hidden) -->
+                        <div id="image-preview-container" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; align-items: center; padding: 10px;">
+                            <div style="position: relative; max-width: 70px; margin-right: 15px;">
+                                <img id="image-preview" src="" alt="QR Preview" style="max-width: 100%; border-radius: 4px;">
+                                <button id="remove-image" type="button" style="position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; border-radius: 50%; background: #ea4335; color: white; border: none; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Action buttons -->
+                        <div style="display: flex; align-items: center; padding-right: 10px;">
+                            <button type="button" id="features-button" class="icon-button">
+                                <span class="material-icons-round">add</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button type="submit" id="analyze-button" class="button button-primary">
+                            <span class="material-icons-round">search</span>
+                            Analyze
+                        </button>
+                    </div>
+                    
+                    <!-- Features menu (initially hidden) -->
+                    <div id="features-menu" class="dropdown-menu hidden">
+                        <div id="live-scan-option" class="dropdown-item">
+                            <span class="material-icons-round">qr_code_scanner</span>
+                            <span>Live QR scanner</span>
+                        </div>
+                        <div id="chrome-extension-option" class="dropdown-item">
+                            <span class="material-icons-round">extension</span>
+                            <span>Chrome Extension</span>
+                        </div>
+                        <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
+                    </div>
+                </form>
+                
+                <!-- QR Scanner Container (initially hidden) -->
+                <div id="qrScannerContainer" style="display: none; margin-top: 20px;">
+                    <div class="info-box primary">
+                        <p class="info-title">Live QR Code Scanner</p>
+                        <p class="info-message">Position the QR code in front of your camera. Once detected, the URL will be automatically analyzed.</p>
+                    </div>
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <button id="stopScanButton" class="button button-secondary">
+                            <span class="material-icons-round">close</span>
+                            Stop Scanning
+                        </button>
+                    </div>
+                    <div id="qr-reader" style="border-radius: 8px; overflow: hidden; border: none; box-shadow: 0 3px 10px rgba(0,0,0,0.1);"></div>
+                </div>
+                
+                <!-- Chrome Extension Info Container (initially hidden) -->
+                <div id="chromeExtensionContainer" style="display: none; margin-top: 20px;">
+                    <div class="info-box feature">
+                        <p class="info-title">Chrome Extension - Coming Soon!</p>
+                        <p class="info-message">We're working on a powerful Chrome extension with these features:</p>
+                    </div>
+                    <div class="extension-features">
+                        <div class="extension-feature-item">
+                            <span class="material-icons-round feature-icon">security</span>
+                            <div class="feature-text">
+                                <h4>Real-time URL Checking</h4>
+                                <p>Automatically analyzes URLs as you browse and provides instant safety alerts for dangerous websites.</p>
+                            </div>
+                        </div>
+                        <div class="extension-feature-item">
+                            <span class="material-icons-round feature-icon">link_off</span>
+                            <div class="feature-text">
+                                <h4>Link Hover Preview</h4>
+                                <p>Hover over any link to see a safety rating and preview before clicking, including full redirect chain for shortened URLs.</p>
+                            </div>
+                        </div>
+                        <div class="extension-feature-item">
+                            <span class="material-icons-round feature-icon">history</span>
+                            <div class="feature-text">
+                                <h4>Safety History</h4>
+                                <p>Keep track of blocked threats and maintain a personal safety score based on your browsing habits.</p>
+                            </div>
+                        </div>
+                        <div class="extension-feature-item">
+                            <span class="material-icons-round feature-icon">integration_instructions</span>
+                            <div class="feature-text">
+                                <h4>Context Menu Integration</h4>
+                                <p>Right-click any link to analyze it directly without leaving your current page.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="coming-soon-banner">
+                        <span class="material-icons-round">rocket_launch</span>
+                        <p>Our Chrome extension is under development and will be available soon!</p>
+                    </div>
+                    <div class="extension-cta">
+                        <button id="notifyMeButton" class="button button-primary">
+                            <span class="material-icons-round">notifications</span>
+                            Notify Me When Available
+                        </button>
+                        <button id="closeExtensionInfoButton" class="button button-secondary">
+                            <span class="material-icons-round">close</span>
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Drag & Drop area -->
+            <div id="drag-drop-area" class="drag-drop-area">
+                <span class="material-icons-round" style="font-size: 32px; color: var(--accent-color); margin-bottom: 10px;">upload_file</span>
+                <p style="color: var(--primary-color); margin: 0 0 15px 0;">Drop QR code image here</p>
+                <button id="browse-button" type="button" class="button button-secondary">
+                    <span class="material-icons-round">folder_open</span>
+                    Browse Files
+                </button>
+            </div>
+        </div>
+        
+        <!-- Loader -->
+        <div id="loader" class="loader" style="display: none;"></div>
+        
+        <!-- Error and status messages -->
+        <div id="errorMessage" class="message error-message" style="display: none;"></div>
+        <div id="statusMessage" class="message status-message" style="display: none;"></div>
+        
+        <!-- Results Container -->
+        <div id="resultContainer" class="result-container" style="display: none;">
+            <h2>Analysis Results</h2>
+            <div id="resultDetails">
+                <!-- Results will be displayed here -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // DOM Elements
+        const urlInput = document.getElementById('urlInput');
+        const mainForm = document.getElementById('mainForm');
+        const featuresButton = document.getElementById('features-button');
+        const featuresMenu = document.getElementById('features-menu');
+        const liveScanOption = document.getElementById('live-scan-option');
+        const chromeExtensionOption = document.getElementById('chrome-extension-option');
+        const qrFileInput = document.getElementById('qr-file-input');
+        const qrScannerContainer = document.getElementById('qrScannerContainer');
+        const chromeExtensionContainer = document.getElementById('chromeExtensionContainer');
+        const stopScanButton = document.getElementById('stopScanButton');
+        const closeExtensionInfoButton = document.getElementById('closeExtensionInfoButton');
+        const installExtensionButton = document.getElementById('installExtensionButton');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const removeImageBtn = document.getElementById('remove-image');
+        const dragDropArea = document.getElementById('drag-drop-area');
+        const loader = document.getElementById('loader');
+        const errorMessage = document.getElementById('errorMessage');
+        const statusMessage = document.getElementById('statusMessage');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultDetails = document.getElementById('resultDetails');
+        const browseButton = document.getElementById('browse-button');
+        
+        // Features menu toggle
+        featuresButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            featuresMenu.classList.toggle('hidden');
+        });
+        
+        // Close features menu when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!featuresButton.contains(e.target) && !featuresMenu.contains(e.target)) {
+                featuresMenu.classList.add('hidden');
+            }
+        });
+        
+        // Live QR scanner
+        liveScanOption.addEventListener('click', function() {
+            featuresMenu.classList.add('hidden');
+            chromeExtensionContainer.style.display = 'none';
+            qrScannerContainer.style.display = 'block';
+            initializeQRScanner();
+        });
+        
+        // Chrome Extension Info
+        chromeExtensionOption.addEventListener('click', function() {
+            featuresMenu.classList.add('hidden');
+            qrScannerContainer.style.display = 'none';
+            chromeExtensionContainer.style.display = 'block';
+        });
+        
+        // Close Extension Info
+        closeExtensionInfoButton.addEventListener('click', function() {
+            chromeExtensionContainer.style.display = 'none';
+        });
+        
+        // Notify Me Button (mock functionality)
+        document.getElementById('notifyMeButton').addEventListener('click', function() {
+            // Simple mock of notification signup
+            const button = this;
+            const originalText = button.innerHTML;
+            
+            button.innerHTML = `
+                <span class="material-icons-round">check_circle</span>
+                We'll Notify You
+            `;
+            button.disabled = true;
+            
+            // Show a status message
+            showStatus("Thank you! We'll notify you when the Chrome extension becomes available.");
+            
+            // Reset button after 3 seconds (in a real app, this would save to a database)
+            setTimeout(function() {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 5000);
+        });
+        
+        // Stop QR scanning
+        stopScanButton.addEventListener('click', function() {
+            qrScannerContainer.style.display = 'none';
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop();
+            }
+        });
+        
+        // Photo QR scanner
+        qrFileInput.addEventListener('change', function(e) {
+            if (e.target.files.length === 0) return;
+            
+            const file = e.target.files[0];
+            processQRImage(file);
+        });
+        
+        // Remove image preview
+        removeImageBtn.addEventListener('click', function() {
+            imagePreviewContainer.style.display = 'none';
+            urlInput.style.opacity = '1';
+            urlInput.removeAttribute('data-image');
+        });
+        
+        // Browse button - trigger file input
+        browseButton.addEventListener('click', function() {
+            qrFileInput.click();
+        });
+        
+        // Form submission
+        mainForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const urlValue = urlInput.value.trim();
+            if (urlValue) {
+                analyzeURL(urlValue);
+            } else {
+                showError("Please enter a URL or scan a QR code.");
+            }
+        });
+        
+        // Drag and drop functionality
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dragDropArea.classList.add('highlighted');
+        }
+        
+        function unhighlight() {
+            dragDropArea.classList.remove('highlighted');
+        }
+        
+        dragDropArea.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0) {
+                processQRImage(files[0]);
+            }
+        }
+        
+        // Process QR Image from file
+        function processQRImage(file) {
+            if (!file.type.match('image.*')) {
+                showError("Please select an image file.");
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    decodeQRFromImage(img);
+                    
+                    // Show image preview
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.style.display = 'flex';
+                    urlInput.style.opacity = '0.4';
+                };
+                img.src = e.target.result;
+            };
+            
+            reader.onerror = function() {
+                showError("Error reading the image file.");
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        // Decode QR code from image
+        function decodeQRFromImage(img) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            canvas.width = img.width;
+            canvas.height = img.height;
+            context.drawImage(img, 0, 0, img.width, img.height);
+            
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            
+            if (code) {
+                urlInput.value = code.data;
+                analyzeURL(code.data);
+            } else {
+                showError("No QR code found in the image.");
+            }
+        }
+        
+        // QR code scanner
+        let html5QrCode = null;
+        
+        function initializeQRScanner() {
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("qr-reader");
+            }
+            
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            };
+            
+            html5QrCode.start(
+                { facingMode: "environment" },
+                config,
+                onQRCodeSuccess,
+                onQRCodeError
+            );
+        }
+        
+        function onQRCodeSuccess(decodedText) {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop();
+            }
+            qrScannerContainer.style.display = 'none';
+            urlInput.value = decodedText;
+            analyzeURL(decodedText);
+        }
+        
+        function onQRCodeError(error) {
+            // Silent error handling during scanning
+        }
+        
+        // Analyze URL function
+        function analyzeURL(url) {
+            showLoader();
+            hideMessages();
+            
+            fetch('/analyze-url', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url: url })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Raw API response:', data);
+                console.log('Webpage summary available:', !!data.webpage_summary);
+                hideLoader();
+                displayResults(data);
+            })
+            .catch(error => {
+                hideLoader();
+                let errorMsg = "Error analyzing URL";
+                if (error.detail) {
+                    errorMsg = error.detail;
+                } else if (typeof error === 'object') {
+                    errorMsg = JSON.stringify(error);
+                }
+                showError(errorMsg);
+            });
+        }
+        
+        // Display results
+        function displayResults(data) {
+            console.log('Response data:', data);
+            resultContainer.style.display = 'block';
+            resultContainer.className = 'result-container';
+            
+            const verdict = data.analysis.verdict.split(' ')[0];
+            
+            // Add class based on verdict
+            if (verdict === 'Safe') {
+                resultContainer.classList.add('safe');
+            } else if (verdict === 'Dangerous') {
+                resultContainer.classList.add('dangerous');
+            } else if (verdict === 'Caution') {
+                resultContainer.classList.add('suspicious');
+            } else if (verdict === 'Invalid') {
+                resultContainer.classList.add('nonexistent');
+            } else if (verdict === 'Pending') {
+                resultContainer.classList.add('pending');
+            }
+            
+            // Build result HTML
+            let resultHTML = `
+                <div class="result-header">
+                    <h3>${data.analysis.verdict}</h3>
+                    <p><strong>URL:</strong> ${data.url}</p>
+                </div>
+            `;
+            
+            // Add message if available
+            if (data.message) {
+                resultHTML += `<p><strong>Analysis:</strong> ${data.message}</p>`;
+            }
+            
+            // Add recommended action if available
+            if (data.recommended_action) {
+                resultHTML += `<p><strong>Recommendation:</strong> ${data.recommended_action}</p>`;
+            }
+            
+            // Add URL unwrapping details if it was a shortened URL
+            if (data.url_unwrapping && data.url_unwrapping.is_shortened) {
+                resultHTML += `
+                    <div class="url-unwrapping">
+                        <p><strong>URL Unwrapping:</strong> This is a shortened URL</p>
+                        <p>Original URL: ${data.url_unwrapping.original_url}</p>
+                        <p>Final destination: ${data.url_unwrapping.final_url}</p>
+                `;
+                
+                if (data.url_unwrapping.redirect_chain && data.url_unwrapping.redirect_chain.length > 0) {
+                    resultHTML += `<p>Redirect chain:</p><ol>`;
+                    data.url_unwrapping.redirect_chain.forEach(url => {
+                        resultHTML += `<li>${url}</li>`;
+                    });
+                    resultHTML += `</ol>`;
+                }
+                
+                resultHTML += `</div>`;
+            }
+            
+            // Add shared domain info if it's a shared domain
+            if (data.analysis.is_shared_domain) {
+                const details = data.analysis.shared_domain_details;
+                resultHTML += `
+                    <div class="shared-domain-info">
+                        <p><strong>Shared Domain Information:</strong></p>
+                        <p>Platform: ${details.platform}</p>
+                        <p>Category: ${details.category}</p>
+                        <p>Risk Level: <span class="risk-${details.risk_level}">${details.risk_level}</span></p>
+                        <p>Description: ${details.description}</p>
+                    </div>
+                `;
+            }
+            
+            // Add heuristic flags if available
+            if (data.analysis.heuristic_flags && data.analysis.heuristic_flags.length > 0) {
+                resultHTML += `
+                    <div class="details">
+                        <p><strong>Suspicious patterns detected:</strong></p>
+                        <ul>
+                `;
+                
+                data.analysis.heuristic_flags.forEach(flag => {
+                    resultHTML += `<li>${flag}</li>`;
+                });
+                
+                resultHTML += `
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            // Add AI analysis if available
+            if (data.ai_analysis) {
+                resultHTML += `
+                    <div class="ai-analysis">
+                        <h4>AI-Powered Analysis</h4>
+                        <p>${data.ai_analysis.explanation}</p>
+                    </div>
+                `;
+            }
+            
+            // Add webpage summary if available (for all URLs: safe, cautious, and dangerous)
+            if (data.webpage_summary) {
+                console.log('Rendering webpage summary:', data.webpage_summary);
+                const safetyClass = data.webpage_summary.safety_status.toLowerCase();
+                resultHTML += `
+                    <div class="webpage-summary ${safetyClass}-summary">
+                        <div class="summary-header">
+                            <h4>Webpage Content Summary</h4>
+                            <div class="safety-badge ${safetyClass}-badge">${data.webpage_summary.safety_status}</div>
+                        </div>
+                        <h5>${data.webpage_summary.title || 'Untitled Page'}</h5>
+                `;
+                
+                // Check if scraping was blocked
+                if (data.webpage_summary.scraping_blocked) {
+                    resultHTML += `
+                        <div class="scraping-blocked">
+                            <div class="blocked-icon">
+                                <span class="material-icons-round">no_photography</span>
+                            </div>
+                            <div class="blocked-message">
+                                <p>${data.webpage_summary.summary}</p>
+                                <p class="blocked-details">${data.webpage_summary.detailed_summary}</p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Display normal content summary
+                    resultHTML += `
+                        <div class="summary-content">
+                            <p class="summary-text">${data.webpage_summary.detailed_summary || data.webpage_summary.summary}</p>
+                        </div>
+                        
+                        <div class="summary-metadata">
+                            <p><strong>Content Length:</strong> ${data.webpage_summary.content_length} characters</p>
+                            <div class="keywords">
+                                <p><strong>Keywords:</strong></p>
+                                <div class="keyword-tags">
+                    `;
+                    
+                    data.webpage_summary.keywords.forEach(keyword => {
+                        resultHTML += `<span class="keyword-tag">${keyword}</span>`;
+                    });
+                    
+                    resultHTML += `
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                resultHTML += `
+                        <p class="summary-disclaimer">This summary was generated automatically and allows you to preview content without visiting the site.</p>
+                    </div>
+                `;
+            }
+            
+            resultDetails.innerHTML = resultHTML;
+            
+            // Scroll to results
+            resultContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Utility functions
+        function showLoader() {
+            loader.style.display = 'block';
+        }
+        
+        function hideLoader() {
+            loader.style.display = 'none';
+        }
+        
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+        
+        function showStatus(message) {
+            statusMessage.textContent = message;
+            statusMessage.style.display = 'block';
+        }
+        
+        function hideMessages() {
+            errorMessage.style.display = 'none';
+            statusMessage.style.display = 'none';
+        }
+        
+        // Clipboard paste functionality
+        urlInput.addEventListener('paste', function(e) {
+            // If the paste contains an image, process it
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const blob = items[i].getAsFile();
+                    processQRImage(blob);
+                    e.preventDefault();
+                    break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
