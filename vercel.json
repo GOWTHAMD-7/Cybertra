@@ -2,25 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/index.py",
+      "src": "api/minimal.py",
       "use": "@vercel/python"
-    },
-    {
-      "src": "templates/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/templates/(.*)",
-      "dest": "/templates/$1"
-    },
-    {
       "src": "/(.*)",
-      "dest": "api/index.py"
+      "dest": "/api/minimal.py"
     }
-  ],
-  "env": {
-    "PYTHON_VERSION": "3.9"
-  }
+  ]
 }
