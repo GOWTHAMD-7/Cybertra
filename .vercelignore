@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+
+# Local env files
+.env
+.env.local
+
+# Cache directories
+ai_cache/
+
+# Build files
+dist/
+build/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+
+# Testing
+test/
+tests/
+
+# Documentation
+docs/
+
+# Keep only what's necessary
+!api/
+!templates/
+!vercel.json
+!requirements.txt
+!runtime.txt
+!now.json
+!package.json

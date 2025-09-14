@@ -1,15 +1,16 @@
 {
   "version": 2,
+  "name": "cybertra",
   "builds": [
     {
-      "src": "api/hello.py",
+      "src": "api/minimal.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/api/hello.py"
+      "dest": "/api/minimal.py"
     }
   ]
 }
