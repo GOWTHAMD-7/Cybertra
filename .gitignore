@@ -36,7 +36,13 @@ geckodriver.exe
 
 # Cache files
 ai_cache/
-*.json
 
 # Logs
 *.log
+
+# Vercel
+.vercel/
+.now/
+
+# Don't exclude all JSON files, only those in ai_cache
+ai_cache/*.json
