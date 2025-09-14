@@ -4,12 +4,39 @@
     {
       "src": "api/hello.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "api/fastapi_simple.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "api/analyzer.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/api/analyze",
+      "dest": "/api/analyzer.py"
+    },
+    {
+      "src": "/api/fastapi",
+      "dest": "/api/fastapi_simple.py"
+    },
+    {
+      "src": "/api/(.*)",
       "dest": "/api/hello.py"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/index.html"
     }
   ]
 }

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cybertra – Defending Your Digital Path</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        header {
+            background-color: #343a40;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+        .subtitle {
+            font-style: italic;
+            opacity: 0.8;
+        }
+        .container {
+            background-color: white;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        button {
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 30px;
+            display: none;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: white;
+        }
+        .card-header {
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        .security-score {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .security-score span {
+            padding: 10px 15px;
+            border-radius: 50%;
+            color: white;
+        }
+        .high {
+            background-color: #28a745;
+        }
+        .medium {
+            background-color: #ffc107;
+        }
+        .low {
+            background-color: #dc3545;
+        }
+        .concerns-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .concerns-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .concerns-list li:last-child {
+            border-bottom: none;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #0066cc;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error {
+            color: #dc3545;
+            padding: 10px;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            margin-top: 20px;
+            display: none;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Cybertra</h1>
+        <p class="subtitle">Defending Your Digital Path</p>
+    </header>
+
+    <div class="container">
+        <h2>URL Security Analyzer</h2>
+        <p>Enter a URL to analyze its security posture and content.</p>
+        
+        <div class="form-group">
+            <label for="url-input">URL:</label>
+            <input type="text" id="url-input" placeholder="Enter a URL (e.g., example.com)" />
+        </div>
+        
+        <button id="analyze-btn">Analyze URL</button>
+        
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Analyzing URL...</p>
+        </div>
+        
+        <div id="error-message" class="error"></div>
+        
+        <div id="results" class="results">
+            <h3>Analysis Results</h3>
+            
+            <div class="security-score">
+                Security Score: <span id="score">-</span>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">Security Concerns</div>
+                <ul id="concerns-list" class="concerns-list">
+                    <!-- Concerns will be inserted here -->
+                </ul>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">Webpage Information</div>
+                <p><strong>Title:</strong> <span id="webpage-title">-</span></p>
+                <p><strong>Summary:</strong> <span id="webpage-summary">-</span></p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2025 Cybertra - All rights reserved.
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const urlInput = document.getElementById('url-input');
+            const loadingDiv = document.querySelector('.loading');
+            const resultsDiv = document.getElementById('results');
+            const errorDiv = document.getElementById('error-message');
+            
+            analyzeBtn.addEventListener('click', function() {
+                const url = urlInput.value.trim();
+                
+                if (!url) {
+                    showError('Please enter a URL to analyze.');
+                    return;
+                }
+                
+                // Hide previous results and errors
+                resultsDiv.style.display = 'none';
+                errorDiv.style.display = 'none';
+                
+                // Show loading indicator
+                loadingDiv.style.display = 'block';
+                
+                // Call the API to analyze the URL
+                fetch(`/api/analyze?url=${encodeURIComponent(url)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        loadingDiv.style.display = 'none';
+                        
+                        if (data.error) {
+                            showError(data.error);
+                            return;
+                        }
+                        
+                        displayResults(data);
+                    })
+                    .catch(error => {
+                        loadingDiv.style.display = 'none';
+                        showError('An error occurred while analyzing the URL. Please try again later.');
+                        console.error('Error:', error);
+                    });
+            });
+            
+            function showError(message) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+            
+            function displayResults(data) {
+                // Display security score
+                const scoreElement = document.getElementById('score');
+                const score = data.security_score;
+                scoreElement.textContent = score;
+                
+                if (score >= 80) {
+                    scoreElement.className = 'high';
+                } else if (score >= 50) {
+                    scoreElement.className = 'medium';
+                } else {
+                    scoreElement.className = 'low';
+                }
+                
+                // Display security concerns
+                const concernsList = document.getElementById('concerns-list');
+                concernsList.innerHTML = '';
+                
+                data.security_concerns.forEach(concern => {
+                    const li = document.createElement('li');
+                    li.textContent = concern;
+                    concernsList.appendChild(li);
+                });
+                
+                // Display webpage information
+                document.getElementById('webpage-title').textContent = data.webpage_info.title || 'N/A';
+                document.getElementById('webpage-summary').textContent = data.webpage_info.summary || 'No summary available.';
+                
+                // Show results
+                resultsDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

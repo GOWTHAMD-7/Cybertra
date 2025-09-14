@@ -48,8 +48,21 @@ uvicorn main:app --reload
 ## Deployment
 
 ### Vercel Deployment
-This project is configured for deployment on Vercel:
+This project is successfully deployed on Vercel:
 
+#### Live URLs
+- Main Application: https://cybertra.vercel.app/
+- API endpoints:
+  - `/api/analyze?url=example.com`: URL analysis endpoint
+  - `/api/fastapi`: FastAPI test endpoint
+  - `/api/health`: Health check endpoint
+
+#### Deployment Architecture
+- Static frontend in `/public` directory
+- Python serverless functions in `/api` directory
+- Custom Vercel configuration in `vercel.json`
+
+#### How to Deploy
 1. Connect your GitHub repository to Vercel
 2. Set the necessary environment variables in the Vercel dashboard
 3. Deploy with the following settings:
